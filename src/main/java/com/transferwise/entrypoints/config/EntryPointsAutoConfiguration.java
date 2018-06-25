@@ -7,6 +7,7 @@ import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -17,9 +18,6 @@ import java.util.List;
 
 @Configuration
 public class EntryPointsAutoConfiguration {
-    @Autowired
-    private MeterRegistry meterRegistry;
-
     @Bean
     public EntryPoints entryPoints(List<EntryPointInterceptor> entryPointInterceptors) {
         return new EntryPoints(entryPointInterceptors);
@@ -54,12 +52,12 @@ public class EntryPointsAutoConfiguration {
     }
 
     @Bean
-    public DatabaseAccessStatisticsEntryPointInterceptor databaseAccessStatisticsEntryPointInterceptor() {
+    public DatabaseAccessStatisticsEntryPointInterceptor databaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
         return new DatabaseAccessStatisticsEntryPointInterceptor(meterRegistry);
     }
 
     @Bean
-    public DatabaseAccessStatisticsBeanPostProcessor databaseAccessStatisticsBeanPostProcessor(EntryPoints entryPoints) {
-        return new DatabaseAccessStatisticsBeanPostProcessor(entryPoints);
+    public DatabaseAccessStatisticsBeanPostProcessor databaseAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+        return new DatabaseAccessStatisticsBeanPostProcessor(beanFactory);
     }
 }

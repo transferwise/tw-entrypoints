@@ -4,15 +4,16 @@ import com.transferwise.common.utils.ExceptionUtils;
 import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.spyql.SpyqlDataSource;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import javax.sql.DataSource;
 
 public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
-    private EntryPoints entryPoints;
+    private BeanFactory beanFactory;
 
-    public DatabaseAccessStatisticsBeanPostProcessor(EntryPoints entryPoints) {
-        this.entryPoints = entryPoints;
+    public DatabaseAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -35,7 +36,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                 if (isAlreadyAttached) {
                     return bean;
                 }
-                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(entryPoints));
+                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class)));
             }
 
             return bean;
