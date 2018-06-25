@@ -56,7 +56,7 @@ public class DatabaseAccessStatistics {
         timeTakenInDatabaseNs.addAndGet(timeTakenNs);
     }
 
-    public void registerDatabaseAction(long timeTakenNs){
+    public void registerDatabaseAction(long timeTakenNs) {
         timeTakenInDatabaseNs.addAndGet(timeTakenNs);
     }
 

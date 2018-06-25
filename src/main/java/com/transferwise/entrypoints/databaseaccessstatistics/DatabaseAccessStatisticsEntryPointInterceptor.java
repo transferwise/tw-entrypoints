@@ -51,9 +51,9 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
             String name = normalizeName(context.getName());
             if (!registeredNames.containsKey(name)) {
-                if (!registeredNames.containsKey(name)) {
-                    // Safeguard to protect graphite
-                    synchronized (registeredNames) {
+                synchronized (registeredNames) {
+                    if (!registeredNames.containsKey(name)) {
+                        // Safeguard to protect graphite
                         if (registeredNames.size() >= maxDistinctEntryPointsCount) {
                             return;
                         }

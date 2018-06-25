@@ -1,6 +1,9 @@
 package com.transferwise.entrypoints.config;
 
-import com.transferwise.entrypoints.*;
+import com.transferwise.entrypoints.EntryPointInterceptor;
+import com.transferwise.entrypoints.EntryPointNamingServletFilter;
+import com.transferwise.entrypoints.EntryPointServletFilter;
+import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -8,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 
 import java.util.List;
@@ -38,7 +40,7 @@ public class EntryPointsAutoConfiguration {
     }
 
     @Bean
-    public EntryPointNamingServletFilter entryPointNamingServletFilter(EntryPoints entryPoints){
+    public EntryPointNamingServletFilter entryPointNamingServletFilter(EntryPoints entryPoints) {
         return new EntryPointNamingServletFilter(entryPoints);
     }
 
