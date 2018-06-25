@@ -1,0 +1,73 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.13.RELEASE'
+    }
+    repositories {
+        mavenLocal()
+        maven { url "http://artifacts.transferwise.com/artifactory/libs-release" }
+    }
+    dependencies {
+        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.7'
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath 'com.transferwise.gradle:common-plugins:1.5'
+    }
+}
+
+plugins {
+    id "net.researchgate.release" version "2.6.0" apply false
+}
+
+apply plugin: 'java'
+apply plugin: "io.spring.dependency-management"
+apply plugin: 'propdeps'
+apply plugin: 'propdeps-idea'
+
+apply plugin: 'com.transferwise.gradle.lib-upload'
+apply plugin: 'com.transferwise.gradle.idea'
+apply plugin: 'com.transferwise.gradle.lib'
+apply plugin: 'com.transferwise.gradle.test'
+apply plugin: 'com.transferwise.gradle.checks'
+apply plugin: 'findbugs'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+
+group = 'com.transferwise'
+
+if (!project.hasProperty("artifactoryUser")) {
+    ext.artifactoryUser = "$System.env.ARTIFACTORY_USER"
+    ext.artifactoryPassword = "$System.env.ARTIFACTORY_PASSWORD"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Edgware.SR3'
+    }
+}
+
+apply plugin: 'net.researchgate.release'
+
+release {
+    tagTemplate = '$name-$version'
+    preTagCommitMessage = "[ci skip] pre tag commit: "
+    tagCommitMessage = "[ci skip] creating tag: "
+    newVersionCommitMessage = "[ci skip] new version commit: "
+}
+
+afterReleaseBuild.dependsOn publish
+
+dependencies {
+    optional('org.springframework.boot:spring-boot-configuration-processor')
+    provided('org.springframework.boot:spring-boot-autoconfigure')
+    provided('org.springframework.boot:spring-boot-starter-logging')
+    provided('org.springframework.boot:spring-boot-starter-web')
+
+    compile 'org.projectlombok:lombok:1.16.20'
+    compile 'com.google.code.findbugs:annotations:3.0.1'
+    compile 'io.micrometer:micrometer-spring-legacy:1.0.4'
+    compile 'org.apache.commons:commons-lang3:3.7'
+    compile 'com.transferwise:common:0.62'
+    compile 'com.transferwise:spyql-core:0.5'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
