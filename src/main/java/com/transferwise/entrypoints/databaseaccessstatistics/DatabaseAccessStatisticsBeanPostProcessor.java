@@ -5,11 +5,15 @@ import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.spyql.SpyqlDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import javax.sql.DataSource;
 
 public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
+    @Value("${spring.application.name:generic-service}")
+    private String appName;
+
     private BeanFactory beanFactory;
 
     public DatabaseAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
@@ -36,7 +40,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                 if (isAlreadyAttached) {
                     return bean;
                 }
-                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class)));
+                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class), appName.replaceAll("-service", "")));
             }
 
             return bean;
