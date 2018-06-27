@@ -2,6 +2,7 @@ package com.transferwise.entrypoints;
 
 import com.transferwise.common.utils.ExceptionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -16,10 +17,14 @@ public class EntryPoints {
         }
     };
 
-    private List<EntryPointInterceptor> interceptors;
+    private List<EntryPointInterceptor> interceptors = new ArrayList<>();
 
     public EntryPoints(List<EntryPointInterceptor> interceptors) {
         this.interceptors = interceptors;
+    }
+
+    public void addInterceptor(EntryPointInterceptor interceptor){
+        interceptors.add(interceptor);
     }
 
     public <T> T inEntryPointContext(String name, Callable<T> callable) {
