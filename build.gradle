@@ -61,7 +61,7 @@ dependencies {
     provided('org.springframework.boot:spring-boot-autoconfigure')
     provided('org.springframework.boot:spring-boot-starter-logging')
     provided('org.springframework.boot:spring-boot-starter-web')
-    provided('com.transferwise:tw-tasks-executor:0.96')
+    provided('com.transferwise:tw-tasks-executor:0.97')
 
     compile 'org.projectlombok:lombok:1.16.20'
     compile 'com.google.code.findbugs:annotations:3.0.1'

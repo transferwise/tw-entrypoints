@@ -6,7 +6,7 @@ import com.transferwise.entrypoints.EntryPointServletFilter;
 import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
-import com.transferwise.entrypoints.twtasks.TwTasksBeanPostProcessor;
+import com.transferwise.entrypoints.twtasks.EntryPointsTwTasksConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -63,8 +63,8 @@ public class EntryPointsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnClass(name = "com.transferwise.tasks.handler.interfaces.ISyncTaskProcessor")
-    public TwTasksBeanPostProcessor entryPointsTwTasksBeanPostProcessor() {
-        return new TwTasksBeanPostProcessor();
+    @ConditionalOnClass(name = "com.transferwise.tasks.processing.ITaskProcessingInterceptor")
+    public EntryPointsTwTasksConfiguration entryPointsTwTasksConfiguration() {
+        return new EntryPointsTwTasksConfiguration();
     }
 }

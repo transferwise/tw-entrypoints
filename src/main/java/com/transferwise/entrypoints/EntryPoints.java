@@ -23,7 +23,7 @@ public class EntryPoints {
         this.interceptors = interceptors;
     }
 
-    public void addInterceptor(EntryPointInterceptor interceptor){
+    public void addInterceptor(EntryPointInterceptor interceptor) {
         interceptors.add(interceptor);
     }
 
@@ -37,6 +37,13 @@ public class EntryPoints {
         } finally {
             contexts.set(currentContext);
         }
+    }
+
+    public void inEntryPointContext(String name, Runnable runnable) {
+        inEntryPointContext(name, () -> {
+            runnable.run();
+            return null;
+        });
     }
 
     public EntryPointContext currentContext() {
