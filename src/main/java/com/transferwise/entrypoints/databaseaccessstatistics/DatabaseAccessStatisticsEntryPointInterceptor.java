@@ -89,7 +89,8 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
 
             if (log.isDebugEnabled()) {
                 log.debug("Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" +
-                    rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + ".");
+                    rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs="
+                    + (das.getTimeTakenInDatabaseNs() / 1000_000_000) + "");
             }
         });
     }
