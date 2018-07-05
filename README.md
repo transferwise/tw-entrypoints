@@ -16,7 +16,7 @@ number of non-transactional queries per call.
 
 This is what EntryPoints Database Access Statistics can help you with.
 
-Just adding the dependency `compile 'com.transferwise:entrypoints:<version>'` to your Spring Boot application while having Micrometer configured, 
+Just adding the dependency `compile 'com.transferwise:entrypoints:<version>'` to your Spring Boot application while having Micrometer and SpyQl configured, 
 database access statistics are started to be collected.
 
 If you send your service's metrics to Prometheus you have everything ready to do neccessary analysis.
@@ -47,3 +47,13 @@ You can set the log level for `com.transferwise.entrypoints.databaseaccessstatis
 the most important database access statistics are printed out.
 
 You can even direct those specific logs to a separate file where you can filter/grep out EntryPoints you are interested in while manually testing application.
+
+## Integrating a Service.
+1. Add entrypoints dependency: `compile 'com.transferwise:entrypoints:<version>'`
+2. Wrap your DataSource(s) to SpyqlDataSource, specifying a correct database name. "Reserved names":
+masterdb - our main database
+masterdb-ro - our main database read-only replica.
+
+```java
+SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource);
+```

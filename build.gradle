@@ -68,7 +68,7 @@ dependencies {
     compile 'io.micrometer:micrometer-spring-legacy:1.0.5'
     compile 'org.apache.commons:commons-lang3:3.7'
     compile 'com.transferwise:common:0.62'
-    compile 'com.transferwise:spyql-core:0.5'
+    compile 'com.transferwise:spyql-core:0.6'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
