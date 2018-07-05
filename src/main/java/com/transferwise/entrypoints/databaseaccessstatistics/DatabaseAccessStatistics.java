@@ -124,6 +124,6 @@ public class DatabaseAccessStatistics {
     }
 
     public long getAndResetTimeTakenInDatabaseNs() {
-        return timeTakenInDatabaseNs.get();
+        return timeTakenInDatabaseNs.getAndSet(0);
     }
 }
