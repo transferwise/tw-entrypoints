@@ -57,3 +57,5 @@ masterdb-ro - our main database read-only replica.
 ```java
 SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource);
 ```
+3. Make sure your service is registered in Prometheus and registers at least following common tag:
+app - your application name.
