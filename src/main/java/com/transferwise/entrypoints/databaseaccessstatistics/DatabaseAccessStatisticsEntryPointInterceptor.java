@@ -47,6 +47,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
         }
     }
 
+    @SuppressWarnings("checkstyle:MagicNumber")
     private void registerCall(EntryPointContext context) {
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
             String name = normalizeName(context.getName());
@@ -90,7 +91,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             if (log.isDebugEnabled()) {
                 log.debug("Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" +
                     rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs="
-                    + (das.getTimeTakenInDatabaseNs() / 1000_000_000) + "");
+                    + (das.getTimeTakenInDatabaseNs() / 1000_000) + "");
             }
         });
     }
