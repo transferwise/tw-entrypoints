@@ -55,7 +55,7 @@ You can even direct those specific logs to a separate file where you can filter/
 * masterdb-ro - our main database read-only replica.
 
 ```java
-SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource);
+SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource, "masterdb");
 ```
 3. Make sure your service is registered in Prometheus and registers at least following common tag:
 * app - your application name.
