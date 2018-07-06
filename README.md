@@ -35,7 +35,7 @@ You can also use Database Access Statistics in test code, for example to verify 
 entryPoints.inEntryPointContext("bankAccountApi", {
 	controller.findAll()
 
-	def das = DatabaseAccessStatistics.get(EntryPoints.currentContext(), "master")
+	def das = DatabaseAccessStatistics.get(EntryPoints.currentContext(), "masterdb")
 	assert das.getNonTransactionalQueriesCount() == 0
 	assert das.getCommitsCount() == 1
 	assert das.getTransactionalQueriesCount() == 1
@@ -59,3 +59,5 @@ SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource);
 ```
 3. Make sure your service is registered in Prometheus and registers at least following common tag:
 app - your application name.
+You can also optionally add:
+appnode - something identifying a node, maybe hostname.

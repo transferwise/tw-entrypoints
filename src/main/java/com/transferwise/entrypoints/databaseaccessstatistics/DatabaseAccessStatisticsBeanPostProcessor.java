@@ -40,7 +40,11 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                 if (isAlreadyAttached) {
                     return bean;
                 }
-                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class), appName.replaceAll("-service", "")));
+                String databaseName = spyqlDataSource.getDatabaseName();
+                if (databaseName == null) {
+                    databaseName = appName.replaceAll("-service", "");
+                }
+                spyqlDataSource.addListener(new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class), databaseName));
             }
 
             return bean;
