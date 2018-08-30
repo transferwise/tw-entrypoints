@@ -23,7 +23,7 @@ If you send your service's metrics to Prometheus you have everything ready to do
 
 Statistics collected are listed in source code of `com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor`     
 
-An example graph for service's statistics can be seen at https://prometheus-runtime.tw.ee/d/NSWZKAvik/masterdb-access?panelId=6&orgId=1&from=now-15m&to=now
+An example graph for service's statistics can be seen at https://prometheus-runtime.tw.ee/d/NSWZKAvik/entrypoints-database-access?orgId=1
 
 ![Database access statistics](docs/das.png)
 
@@ -51,13 +51,14 @@ You can even direct those specific logs to a separate file where you can filter/
 ## Integrating a Service.
 1. Add entrypoints dependency: `compile 'com.transferwise:entrypoints:<version>'`
 2. Wrap your DataSource(s) to SpyqlDataSource, specifying a correct database name. "Reserved names":
-masterdb - our main database
-masterdb-ro - our main database read-only replica.
+* masterdb - our main database
+* masterdb-ro - our main database read-only replica.
 
 ```java
-SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource);
+SpyqlDataSource sqyqlDataSource = new SpyqlDataSource(hikariDataSource, "masterdb");
 ```
 3. Make sure your service is registered in Prometheus and registers at least following common tag:
-app - your application name.
+* app - your application name.
+
 You can also optionally add:
-appnode - something identifying a node, maybe hostname.
+* appnode - something identifying a node, maybe hostname.
