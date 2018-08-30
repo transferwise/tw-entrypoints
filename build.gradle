@@ -1,13 +1,12 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.13.RELEASE'
+        springBootVersion = '1.5.15.RELEASE'
     }
     repositories {
         mavenLocal()
-        maven { url "http://artifacts.transferwise.com/artifactory/libs-release" }
+        maven { url "http://arti.tw.ee/artifactory/libs-release" }
     }
     dependencies {
-        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.7'
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
         classpath 'com.transferwise.gradle:common-plugins:1.5'
     }
@@ -19,8 +18,6 @@ plugins {
 
 apply plugin: 'java'
 apply plugin: "io.spring.dependency-management"
-apply plugin: 'propdeps'
-apply plugin: 'propdeps-idea'
 
 apply plugin: 'com.transferwise.gradle.lib-upload'
 apply plugin: 'com.transferwise.gradle.idea'
@@ -41,7 +38,7 @@ if (!project.hasProperty("artifactoryUser")) {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
-        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Edgware.SR3'
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Edgware.SR4'
     }
 }
 
@@ -57,11 +54,11 @@ release {
 afterReleaseBuild.dependsOn publish
 
 dependencies {
-    optional('org.springframework.boot:spring-boot-configuration-processor')
-    provided('org.springframework.boot:spring-boot-autoconfigure')
-    provided('org.springframework.boot:spring-boot-starter-logging')
-    provided('org.springframework.boot:spring-boot-starter-web')
-    provided('com.transferwise:tw-tasks-executor:0.97')
+    compileOnly('org.springframework.boot:spring-boot-configuration-processor')
+    compileOnly('org.springframework.boot:spring-boot-autoconfigure')
+    compileOnly('org.springframework.boot:spring-boot-starter-logging')
+    compileOnly('org.springframework.boot:spring-boot-starter-web')
+    compileOnly('com.transferwise:tw-tasks-executor:0.97')
 
     compile 'org.projectlombok:lombok:1.16.20'
     compile 'com.google.code.findbugs:annotations:3.0.1'
