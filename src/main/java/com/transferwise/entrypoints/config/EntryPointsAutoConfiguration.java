@@ -18,6 +18,7 @@ import org.springframework.core.Ordered;
 import java.util.List;
 
 @Configuration
+@ConditionalOnProperty(value = "transferwise.entrypoints.autoconfigure.enabled", matchIfMissing = true)
 public class EntryPointsAutoConfiguration {
     @Bean
     public EntryPoints entryPoints(List<EntryPointInterceptor> entryPointInterceptors) {
