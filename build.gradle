@@ -8,7 +8,7 @@ buildscript {
     }
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath 'com.transferwise.gradle:common-plugins:1.5'
+        classpath 'com.transferwise.gradle:common-plugins:1.22'
     }
 }
 
@@ -58,13 +58,13 @@ dependencies {
     compileOnly('org.springframework.boot:spring-boot-autoconfigure')
     compileOnly('org.springframework.boot:spring-boot-starter-logging')
     compileOnly('org.springframework.boot:spring-boot-starter-web')
-    compileOnly('com.transferwise:tw-tasks-executor:0.97')
+    compileOnly('com.transferwise.tasks:tw-tasks-executor:1.0.1')
 
     compile 'org.projectlombok:lombok:1.16.20'
     compile 'com.google.code.findbugs:annotations:3.0.1'
     compile 'io.micrometer:micrometer-spring-legacy:1.0.5'
     compile 'org.apache.commons:commons-lang3:3.7'
-    compile 'com.transferwise:common:0.62'
+    compile 'com.transferwise:common:0.84'
     compile 'com.transferwise:spyql-core:0.6'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'

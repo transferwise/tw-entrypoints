@@ -1,6 +1,6 @@
 package com.transferwise.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.common.utils.ExceptionUtils;
+import com.transferwise.common.baseutils.ExceptionUtils;
 import com.transferwise.entrypoints.EntryPoints;
 import com.transferwise.spyql.SpyqlDataSource;
 import org.springframework.beans.BeansException;
@@ -27,7 +27,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        return ExceptionUtils.callUnchecked(() -> {
+        return ExceptionUtils.doUnchecked(() -> {
             if (bean instanceof DataSource) {
                 DataSource dataSource = (DataSource) bean;
                 if (!dataSource.isWrapperFor(SpyqlDataSource.class)) {

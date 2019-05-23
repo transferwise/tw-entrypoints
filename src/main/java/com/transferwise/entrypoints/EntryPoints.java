@@ -1,6 +1,6 @@
 package com.transferwise.entrypoints;
 
-import com.transferwise.common.utils.ExceptionUtils;
+import com.transferwise.common.baseutils.ExceptionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class EntryPoints {
             EntryPointContext context = new EntryPointContext(name);
             contexts.set(context);
 
-            return ExceptionUtils.callUnchecked(() -> inEntryPointContext(context, callable, 0));
+            return ExceptionUtils.doUnchecked(() -> inEntryPointContext(context, callable, 0));
         } finally {
             contexts.set(currentContext);
         }
