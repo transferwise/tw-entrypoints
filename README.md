@@ -23,7 +23,7 @@ If you send your service's metrics to Prometheus you have everything ready to do
 
 Statistics collected are listed in source code of `com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor`     
 
-An example graph for service's statistics can be seen at https://prometheus-runtime.tw.ee/d/NSWZKAvik/entrypoints-database-access?orgId=1
+An example graph for service's statistics can be seen at https://grafana.tw.ee/d/NSWZKAvik/entrypoints-database-access?orgId=1
 
 ![Database access statistics](docs/das.png)
 
