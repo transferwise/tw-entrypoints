@@ -19,12 +19,26 @@ public class EntryPointNamingServletFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         EntryPointContext context = entryPoints.currentContext();
-        if (context != null) {
-            Object mapping = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (context == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        boolean nameSet = false;
+
+        Object mapping = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (mapping != null) {
+            context.setName(String.valueOf(mapping));
+            nameSet = true;
+        }
+
+        filterChain.doFilter(request, response);
+
+        if (!nameSet) {
+            mapping = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
             if (mapping != null) {
                 context.setName(String.valueOf(mapping));
             }
         }
-        filterChain.doFilter(request, response);
     }
 }
