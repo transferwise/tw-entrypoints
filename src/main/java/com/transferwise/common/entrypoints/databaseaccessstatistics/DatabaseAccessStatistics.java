@@ -1,6 +1,6 @@
-package com.transferwise.entrypoints.databaseaccessstatistics;
+package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.entrypoints.EntryPointContext;
+import com.transferwise.common.entrypoints.EntryPointContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class DatabaseAccessStatistics {
-    public static String ATTRIBUTE_KEY = "DatabaseAccessStatistics";
+    public static final String ATTRIBUTE_KEY = "DatabaseAccessStatistics";
 
     public static DatabaseAccessStatistics get(EntryPointContext entryPointContext, String databaseName) {
         if (entryPointContext == null) {
@@ -35,11 +35,13 @@ public class DatabaseAccessStatistics {
         return result;
     }
 
-    private AtomicLong commitsCount = new AtomicLong();
-    private AtomicLong rollbacksCount = new AtomicLong();
-    private AtomicLong nonTransactionalQueriesCount = new AtomicLong();
-    private AtomicLong transactionalQueriesCount = new AtomicLong();
-    private AtomicLong timeTakenInDatabaseNs = new AtomicLong();
+    private final AtomicLong commitsCount = new AtomicLong();
+    private final AtomicLong rollbacksCount = new AtomicLong();
+    private final AtomicLong nonTransactionalQueriesCount = new AtomicLong();
+    private final AtomicLong transactionalQueriesCount = new AtomicLong();
+    private final AtomicLong timeTakenInDatabaseNs = new AtomicLong();
+    private final AtomicLong emptyTransactionsCount = new AtomicLong();
+
     @Getter
     private long currentConnectionsCount = 0;
     @Getter
@@ -125,5 +127,17 @@ public class DatabaseAccessStatistics {
 
     public long getAndResetTimeTakenInDatabaseNs() {
         return timeTakenInDatabaseNs.getAndSet(0);
+    }
+
+    public long getEmtpyTransactionsCount() {
+        return emptyTransactionsCount.get();
+    }
+
+    public long getAndResetEmptyTransactionsCount() {
+        return emptyTransactionsCount.getAndSet(0);
+    }
+
+    public void registerEmptyTransaction() {
+        emptyTransactionsCount.incrementAndGet();
     }
 }

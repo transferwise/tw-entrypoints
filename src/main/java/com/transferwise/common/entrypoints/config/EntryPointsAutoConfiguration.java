@@ -1,12 +1,12 @@
-package com.transferwise.entrypoints.config;
+package com.transferwise.common.entrypoints.config;
 
-import com.transferwise.entrypoints.EntryPointInterceptor;
-import com.transferwise.entrypoints.EntryPointNamingServletFilter;
-import com.transferwise.entrypoints.EntryPointServletFilter;
-import com.transferwise.entrypoints.EntryPoints;
-import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
-import com.transferwise.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
-import com.transferwise.entrypoints.twtasks.EntryPointsTwTasksConfiguration;
+import com.transferwise.common.entrypoints.EntryPointInterceptor;
+import com.transferwise.common.entrypoints.EntryPointNamingServletFilter;
+import com.transferwise.common.entrypoints.EntryPointServletFilter;
+import com.transferwise.common.entrypoints.EntryPoints;
+import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
+import com.transferwise.common.entrypoints.twtasks.EntryPointsTwTasksConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

@@ -1,8 +1,8 @@
-package com.transferwise.entrypoints.databaseaccessstatistics;
+package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
-import com.transferwise.entrypoints.EntryPoints;
-import com.transferwise.spyql.SpyqlDataSource;
+import com.transferwise.common.entrypoints.EntryPoints;
+import com.transferwise.common.spyql.SpyqlDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
     @Value("${spring.application.name:generic-service}")
     private String appName;
 
-    private BeanFactory beanFactory;
+    private final BeanFactory beanFactory;
 
     public DatabaseAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
@@ -34,8 +34,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                     return bean;
                 }
                 SpyqlDataSource spyqlDataSource = dataSource.unwrap(SpyqlDataSource.class);
-                boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().filter((l) -> l instanceof DatabaseAccessStatisticsSpyqlListener)
-                    .findFirst().isPresent();
+                boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch((l) -> l instanceof DatabaseAccessStatisticsSpyqlListener);
 
                 if (isAlreadyAttached) {
                     return bean;

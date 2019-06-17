@@ -1,4 +1,4 @@
-package com.transferwise.entrypoints;
+package com.transferwise.common.entrypoints;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

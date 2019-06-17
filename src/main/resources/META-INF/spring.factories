@@ -1,1 +1,1 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.transferwise.entrypoints.config.EntryPointsAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.transferwise.common.entrypoints.config.EntryPointsAutoConfiguration

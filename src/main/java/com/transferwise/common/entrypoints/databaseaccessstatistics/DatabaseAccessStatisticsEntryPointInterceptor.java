@@ -1,7 +1,7 @@
-package com.transferwise.entrypoints.databaseaccessstatistics;
+package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.entrypoints.EntryPointContext;
-import com.transferwise.entrypoints.EntryPointInterceptor;
+import com.transferwise.common.entrypoints.EntryPointContext;
+import com.transferwise.common.entrypoints.EntryPointInterceptor;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -17,10 +18,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
+/**
+ * TODO: Add support to read only transactions. Also count how many non transactional selects and updates there were.
+ *       This is not important on MySQL 5.6 though.
+ */
 public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPointInterceptor {
-    private static Map<String, Boolean> registeredNames = new ConcurrentHashMap<>();
-    private MeterRegistry meterRegistry;
-    private int maxDistinctEntryPointsCount = 1000;
+    private static final Map<String, Boolean> registeredNames = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
+    private final int maxDistinctEntryPointsCount = 2000;
     private AtomicInteger registeredNamesCount;
 
 
@@ -54,17 +59,15 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             if (!registeredNames.containsKey(name)) {
                 synchronized (registeredNames) {
                     if (!registeredNames.containsKey(name)) {
-                        // Safeguard to protect graphite
-                        if (registeredNames.size() >= maxDistinctEntryPointsCount) {
+                        // Safeguard to protect metrics collectors
+                        if (registeredNames.size() > maxDistinctEntryPointsCount) {
                             return;
                         }
                         registeredNames.put(name, Boolean.TRUE);
                         registeredNamesCount.set(registeredNames.size());
-                        if (registeredNames.size() >= maxDistinctEntryPointsCount) {
+                        if (registeredNames.size() == maxDistinctEntryPointsCount) {
                             log.error("Too many entry points detected, check for parameterized urls in: ");
-                            registeredNames.forEach((k, v) -> {
-                                log.info("Registered Entry Point: `" + k + "`");
-                            });
+                            registeredNames.forEach((k, v) -> log.info("Registered Entry Point: `" + k + "`"));
                         }
                     }
                 }
@@ -86,6 +89,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             meterRegistry.summary(baseName + "TQueries", tags).record(transactionalQueriesCount);
             meterRegistry.summary(baseName + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
             meterRegistry.summary(baseName + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
+            meterRegistry.summary(baseName + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
             meterRegistry.timer(baseName + "TimeTaken", tags).record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
 
             if (log.isDebugEnabled()) {
@@ -99,7 +103,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
     private void registerUnknownCalls(EntryPointContext unknownContext) {
         DatabaseAccessStatistics.getAll(unknownContext).forEach((das) -> {
             Tag dbTag = Tag.of("db", das.getDatabaseName());
-            List<Tag> tags = Arrays.asList(dbTag);
+            List<Tag> tags = Collections.singletonList(dbTag);
 
             long commits = das.getAndResetCommitsCount();
             long rollbacks = das.getAndResetRollbacksCount();
@@ -113,6 +117,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             meterRegistry.counter(baseName + "NTQueries", tags).increment(ntQueries);
             meterRegistry.counter(baseName + "TQueries", tags).increment(tQueries);
             meterRegistry.counter(baseName + "TimeTakenNs", tags).increment(timeTakenNs);
+            meterRegistry.counter(baseName + "EmptyTransactions", tags).increment(das.getAndResetEmptyTransactionsCount());
         });
     }
 

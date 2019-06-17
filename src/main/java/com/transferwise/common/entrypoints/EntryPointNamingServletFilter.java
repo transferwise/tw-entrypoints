@@ -1,4 +1,4 @@
-package com.transferwise.entrypoints;
+package com.transferwise.common.entrypoints;
 
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class EntryPointNamingServletFilter extends OncePerRequestFilter {
-    private EntryPoints entryPoints;
+    private final EntryPoints entryPoints;
 
     public EntryPointNamingServletFilter(EntryPoints entryPoints) {
         this.entryPoints = entryPoints;

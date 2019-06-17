@@ -1,4 +1,4 @@
-package com.transferwise.entrypoints;
+package com.transferwise.common.entrypoints;
 
 import java.util.concurrent.Callable;
 

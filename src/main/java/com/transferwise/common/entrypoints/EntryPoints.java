@@ -1,15 +1,14 @@
-package com.transferwise.entrypoints;
+package com.transferwise.common.entrypoints;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 public class EntryPoints {
-    private ThreadLocal<EntryPointContext> contexts = new ThreadLocal<>();
+    private final static ThreadLocal<EntryPointContext> contexts = new ThreadLocal<>();
 
-    private EntryPointContext unknownContext = new EntryPointContext("unknown") {
+    private final EntryPointContext unknownContext = new EntryPointContext("unknown") {
         @Override
         public EntryPointContext setName(String name) {
             // no-op
@@ -17,7 +16,7 @@ public class EntryPoints {
         }
     };
 
-    private List<EntryPointInterceptor> interceptors = new ArrayList<>();
+    private final List<EntryPointInterceptor> interceptors;
 
     public EntryPoints(List<EntryPointInterceptor> interceptors) {
         this.interceptors = interceptors;
@@ -59,8 +58,6 @@ public class EntryPoints {
         if (interceptorIdx >= interceptors.size()) {
             return callable.call();
         }
-        return interceptors.get(interceptorIdx).inEntryPointContext(context, unknownContext, () -> {
-            return inEntryPointContext(context, callable, interceptorIdx + 1);
-        });
+        return interceptors.get(interceptorIdx).inEntryPointContext(context, unknownContext, () -> inEntryPointContext(context, callable, interceptorIdx + 1));
     }
 }

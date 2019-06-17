@@ -1,6 +1,6 @@
-package com.transferwise.entrypoints.twtasks;
+package com.transferwise.common.entrypoints.twtasks;
 
-import com.transferwise.entrypoints.EntryPoints;
+import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.tasks.processing.ITaskProcessingInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -13,10 +13,6 @@ public class EntryPointsTwTasksConfiguration {
 
     @Bean
     public ITaskProcessingInterceptor entryPointsTasksProcessingInterceptor() {
-        return (task, processor) -> {
-            entryPoints.inEntryPointContext("TwTasks_" + task.getType(), () -> {
-                processor.run();
-            });
-        };
+        return (task, processor) -> entryPoints.inEntryPointContext("TwTasks_" + task.getType(), processor);
     }
 }

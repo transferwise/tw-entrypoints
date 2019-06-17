@@ -1,12 +1,12 @@
-package com.transferwise.entrypoints.databaseaccessstatistics;
+package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.entrypoints.EntryPoints;
-import com.transferwise.spyql.event.*;
-import com.transferwise.spyql.listener.SpyqlConnectionListener;
-import com.transferwise.spyql.listener.SpyqlDataSourceListener;
+import com.transferwise.common.entrypoints.EntryPoints;
+import com.transferwise.common.spyql.event.*;
+import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
+import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 
 public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
-    private EntryPoints entryPoints;
+    private final EntryPoints entryPoints;
     private String databaseName = "generic";
 
     public DatabaseAccessStatisticsSpyqlListener(EntryPoints entryPoints) {
@@ -29,24 +29,35 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
     }
 
     class ConnectionListener implements SpyqlConnectionListener {
+        private TransactionBeginEvent transactionBeginEvent;
+
+        @Override
+        public void onTransactionBegin(TransactionBeginEvent event) {
+            this.transactionBeginEvent = event;
+        }
+
         @Override
         public void onTransactionCommit(TransactionCommitEvent event) {
             currentDas().registerCommit(event.getExecutionTimeNs());
+            registerEmptyTransaction();
         }
 
         @Override
         public void onTransactionCommitFailure(TransactionCommitFailureEvent event) {
             currentDas().registerDatabaseAction(event.getExecutionTimeNs());
+            registerEmptyTransaction();
         }
 
         @Override
         public void onTransactionRollback(TransactionRollbackEvent event) {
             currentDas().registerRollback(event.getExecutionTimeNs());
+            registerEmptyTransaction();
         }
 
         @Override
         public void onTransactionRollbackFailure(TransactionRollbackFailureEvent event) {
             currentDas().registerDatabaseAction(event.getExecutionTimeNs());
+            registerEmptyTransaction();
         }
 
         @Override
@@ -75,6 +86,12 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
         private DatabaseAccessStatistics currentDas() {
             return DatabaseAccessStatistics.get(entryPoints.currentContextOrUnknown(), databaseName);
+        }
+
+        private void registerEmptyTransaction() {
+            if (transactionBeginEvent == null || transactionBeginEvent.isEmptyTransaction()) {
+                currentDas().registerEmptyTransaction();
+            }
         }
     }
 }
