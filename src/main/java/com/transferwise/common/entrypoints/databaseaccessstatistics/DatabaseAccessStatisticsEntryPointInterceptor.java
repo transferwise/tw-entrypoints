@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * TODO: Add support to read only transactions. Also count how many non transactional selects and updates there were.
  *       This is not important on MySQL 5.6 though.
- */ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPointInterceptor {
+ */
+public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPointInterceptor {
     private static final Map<String, Boolean> registeredNames = new ConcurrentHashMap<>();
     private final MeterRegistry meterRegistry;
     private final int maxDistinctEntryPointsCount = 2000;
