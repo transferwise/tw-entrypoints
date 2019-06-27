@@ -2,8 +2,10 @@ package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.entrypoints.EntryPointContext;
 import com.transferwise.common.entrypoints.EntryPointInterceptor;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -83,19 +85,17 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
             long transactionalQueriesCount = das.getTransactionalQueriesCount();
 
-            meterRegistry.summary(baseName + "Commits", tags).record(commitsCount);
-            meterRegistry.summary(baseName + "Rollbacks", tags).record(rollbacksCount);
-            meterRegistry.summary(baseName + "NTQueries", tags).record(nonTransactionalQueriesCount);
-            meterRegistry.summary(baseName + "TQueries", tags).record(transactionalQueriesCount);
-            meterRegistry.summary(baseName + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
-            meterRegistry.summary(baseName + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
-            meterRegistry.summary(baseName + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
-            meterRegistry.timer(baseName + "TimeTaken", tags).record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
+            summaryWithoutBuckets(baseName + "Commits", tags).record(commitsCount);
+            summaryWithoutBuckets(baseName + "Rollbacks", tags).record(rollbacksCount);
+            summaryWithoutBuckets(baseName + "NTQueries", tags).record(nonTransactionalQueriesCount);
+            summaryWithoutBuckets(baseName + "TQueries", tags).record(transactionalQueriesCount);
+            summaryWithoutBuckets(baseName + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
+            summaryWithoutBuckets(baseName + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
+            summaryWithoutBuckets(baseName + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
+            timerWithoutBuckets(baseName + "TimeTaken", tags).record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
 
             if (log.isDebugEnabled()) {
-                log.debug("Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" +
-                    rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs="
-                    + (das.getTimeTakenInDatabaseNs() / 1000_000) + "");
+                log.debug("Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (das.getTimeTakenInDatabaseNs() / 1000_000) + "");
             }
         });
     }
@@ -123,5 +123,13 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
 
     private String normalizeName(String name) {
         return StringUtils.replaceChars(name, '.', '_');
+    }
+
+    private DistributionSummary summaryWithoutBuckets(String name, Iterable<Tag> tags) {
+        return DistributionSummary.builder(name).tags(tags).publishPercentileHistogram(false).register(meterRegistry);
+    }
+
+    private Timer timerWithoutBuckets(String name, Iterable<Tag> tags) {
+        return Timer.builder(name).tags(tags).publishPercentileHistogram(false).register(meterRegistry);
     }
 }
