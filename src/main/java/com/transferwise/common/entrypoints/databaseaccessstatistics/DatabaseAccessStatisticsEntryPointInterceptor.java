@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -126,10 +127,19 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
     }
 
     private DistributionSummary summaryWithoutBuckets(String name, Iterable<Tag> tags) {
-        return DistributionSummary.builder(name).tags(tags).publishPercentileHistogram(false).register(meterRegistry);
+        return DistributionSummary.builder(name).tags(tags)
+            .publishPercentileHistogram(false)
+            .maximumExpectedValue(1L) // TODO: this limits number on buckets and is currently needed because the above histogram disabling does not work due to many services using management.metrics.distribution.percentiles-histogram.all = true.
+            // remove it when services start using histograms sensibly
+            .register(meterRegistry);
     }
 
     private Timer timerWithoutBuckets(String name, Iterable<Tag> tags) {
-        return Timer.builder(name).tags(tags).publishPercentileHistogram(false).register(meterRegistry);
+        return Timer.builder(name).tags(tags)
+            .publishPercentileHistogram(false)
+            .minimumExpectedValue(Duration.ofNanos(1L))
+            .maximumExpectedValue(Duration.ofNanos(1L)) // TODO: last two are limiting number on buckets and are currently needed because the above histogram disabling does not work due to many services using management.metrics.distribution.percentiles-histogram.all = true.
+            // remove those when services start using histograms sensibly
+            .register(meterRegistry);
     }
 }
