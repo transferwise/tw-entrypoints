@@ -106,7 +106,7 @@ public class DatabaseAccessStatistics {
     }
 
     public long getAndResetTransactionalQueriesCount() {
-        return nonTransactionalQueriesCount.getAndSet(0);
+        return transactionalQueriesCount.getAndSet(0);
     }
 
     public void registerConnectionOpened() {
