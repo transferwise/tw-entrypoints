@@ -2,6 +2,7 @@ package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.entrypoints.EntryPointContext;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -48,6 +49,9 @@ public class DatabaseAccessStatistics {
     private long maxConnectionsCount = 0;
     @Getter
     private String databaseName;
+    @Setter
+    @Getter
+    private boolean logSql;
 
     public DatabaseAccessStatistics(String databaseName) {
         this.databaseName = databaseName;

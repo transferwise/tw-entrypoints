@@ -4,7 +4,9 @@ import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.spyql.event.*;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
     private final EntryPoints entryPoints;
     private String databaseName = "generic";
@@ -63,9 +65,15 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
         @Override
         public void onStatementExecute(StatementExecuteEvent event) {
             if (event.isInTransaction()) {
+                if (currentDas().isLogSql()) {
+                    log.info("TQ: " + event.getSql());
+                }
                 currentDas().registerTransactionalQuery(event.getExecutionTimeNs());
             } else {
-                currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
+                if (currentDas().isLogSql()) {
+                    log.info("NTQ:" + event.getSql());
+                    currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
+                }
             }
         }
 
