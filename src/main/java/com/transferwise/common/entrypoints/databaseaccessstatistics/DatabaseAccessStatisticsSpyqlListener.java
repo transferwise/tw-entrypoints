@@ -72,8 +72,8 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
             } else {
                 if (currentDas().isLogSql()) {
                     log.info("NTQ:" + event.getSql());
-                    currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
                 }
+                currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
             }
         }
 
