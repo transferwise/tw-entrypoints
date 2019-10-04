@@ -66,12 +66,14 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
         public void onStatementExecute(StatementExecuteEvent event) {
             if (event.isInTransaction()) {
                 if (currentDas().isLogSql()) {
-                    log.info("TQ: " + event.getSql());
+                    Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
+                    log.info("TQ: " + event.getSql(), t);
                 }
                 currentDas().registerTransactionalQuery(event.getExecutionTimeNs());
             } else {
                 if (currentDas().isLogSql()) {
-                    log.info("NTQ:" + event.getSql());
+                    Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
+                    log.info("NTQ:" + event.getSql(), t);
                 }
                 currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
             }

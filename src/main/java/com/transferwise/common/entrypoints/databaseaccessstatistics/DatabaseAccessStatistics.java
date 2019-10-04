@@ -52,6 +52,9 @@ public class DatabaseAccessStatistics {
     @Setter
     @Getter
     private boolean logSql;
+    @Setter
+    @Getter
+    private boolean logSqlStacktrace;
 
     public DatabaseAccessStatistics(String databaseName) {
         this.databaseName = databaseName;
