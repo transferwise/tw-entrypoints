@@ -1,44 +1,35 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.entrypoints.EntryPointContext;
-import com.transferwise.common.entrypoints.EntryPointInterceptor;
-import io.micrometer.core.instrument.DistributionSummary;
+import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
+import com.transferwise.common.entrypoints.IEntryPointInterceptor;
+import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.PostConstruct;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.summaryWithoutBuckets;
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.timerWithoutBuckets;
 
 @Slf4j
 /**
  * TODO: Add support to read only transactions. Also count how many non transactional selects and updates there were.
  *       This is not important on MySQL 5.6 though.
  */
-public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPointInterceptor {
-    private static final Map<String, Boolean> registeredNames = new ConcurrentHashMap<>();
+public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPointInterceptor {
     private final MeterRegistry meterRegistry;
-    private final int maxDistinctEntryPointsCount = 2000;
-    private AtomicInteger registeredNamesCount;
 
+    private IEntryPointsRegistry entryPointsRegistry;
 
-    public DatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
+    public DatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry, IEntryPointsRegistry entryPointsRegistry) {
         this.meterRegistry = meterRegistry;
-    }
-
-    @PostConstruct
-    public void init() {
-        registeredNamesCount = meterRegistry.gauge("EntryPoints.RegistrationsCount", new AtomicInteger());
+        this.entryPointsRegistry = entryPointsRegistry;
     }
 
     @Override
@@ -50,6 +41,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
                 registerUnknownCalls(unknownContext);
                 registerCall(context);
             } catch (Throwable t) {
+                // TODO: Maybe should be throttled.
                 log.error(t.getMessage(), t);
             }
         }
@@ -58,45 +50,37 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
     @SuppressWarnings("checkstyle:MagicNumber")
     private void registerCall(EntryPointContext context) {
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
-            String name = normalizeName(context.getName());
-            if (!registeredNames.containsKey(name)) {
-                synchronized (registeredNames) {
-                    if (!registeredNames.containsKey(name)) {
-                        // Safeguard to protect metrics collectors
-                        if (registeredNames.size() > maxDistinctEntryPointsCount) {
-                            return;
-                        }
-                        registeredNames.put(name, Boolean.TRUE);
-                        registeredNamesCount.set(registeredNames.size());
-                        if (registeredNames.size() == maxDistinctEntryPointsCount) {
-                            log.error("Too many entry points detected, check for parameterized urls in: ");
-                            registeredNames.forEach((k, v) -> log.info("Registered Entry Point: `" + k + "`"));
-                        }
-                    }
+            String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
+            if (entryPointsRegistry.registerEntryPoint(context.getName())) {
+                //TODO: Should be renamed from EntryPoints to something referring to DatabaseAccessStatistics.
+                String baseName = "EntryPoints.Das.Registered.";
+                Tag dbTag = Tag.of("db", das.getDatabaseName());
+                Tag entryPointNameTag = Tag.of("entryPointName", name);
+                List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag);
+
+                long commitsCount = das.getCommitsCount();
+                long rollbacksCount = das.getRollbacksCount();
+                long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
+                long transactionalQueriesCount = das.getTransactionalQueriesCount();
+
+                summaryWithoutBuckets(meterRegistry, baseName + "Commits", tags).record(commitsCount);
+                summaryWithoutBuckets(meterRegistry, baseName + "Rollbacks", tags).record(rollbacksCount);
+                summaryWithoutBuckets(meterRegistry, baseName + "NTQueries", tags).record(nonTransactionalQueriesCount);
+                summaryWithoutBuckets(meterRegistry, baseName + "TQueries", tags).record(transactionalQueriesCount);
+                summaryWithoutBuckets(meterRegistry, baseName + "MaxConcurrentConnections", tags)
+                    .record(das.getMaxConnectionsCount());
+                summaryWithoutBuckets(meterRegistry, baseName + "RemainingOpenConnections", tags)
+                    .record(das.getCurrentConnectionsCount());
+                summaryWithoutBuckets(meterRegistry, baseName + "EmptyTransactions", tags)
+                    .record(das.getEmtpyTransactionsCount());
+                timerWithoutBuckets(meterRegistry, baseName + "TimeTaken", tags)
+                    .record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
+
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        "Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (das
+                            .getTimeTakenInDatabaseNs() / 1000_000) + "");
                 }
-            }
-
-            String baseName = "EntryPoints.Registered.";
-            Tag dbTag = Tag.of("db", das.getDatabaseName());
-            Tag entryPointNameTag = Tag.of("entryPointName", name);
-            List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag);
-
-            long commitsCount = das.getCommitsCount();
-            long rollbacksCount = das.getRollbacksCount();
-            long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
-            long transactionalQueriesCount = das.getTransactionalQueriesCount();
-
-            summaryWithoutBuckets(baseName + "Commits", tags).record(commitsCount);
-            summaryWithoutBuckets(baseName + "Rollbacks", tags).record(rollbacksCount);
-            summaryWithoutBuckets(baseName + "NTQueries", tags).record(nonTransactionalQueriesCount);
-            summaryWithoutBuckets(baseName + "TQueries", tags).record(transactionalQueriesCount);
-            summaryWithoutBuckets(baseName + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
-            summaryWithoutBuckets(baseName + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
-            summaryWithoutBuckets(baseName + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
-            timerWithoutBuckets(baseName + "TimeTaken", tags).record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (das.getTimeTakenInDatabaseNs() / 1000_000) + "");
             }
         });
     }
@@ -111,35 +95,15 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements EntryPoint
             long ntQueries = das.getAndResetNonTransactionalQueriesCount();
             long tQueries = das.getAndResetTransactionalQueriesCount();
             long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
-            String baseName = "EntryPoints.Unknown.";
+            String baseName = "EntryPoints.Das.Unknown.";
 
             meterRegistry.counter(baseName + "Commits", tags).increment(commits);
             meterRegistry.counter(baseName + "Rollbacks", tags).increment(rollbacks);
             meterRegistry.counter(baseName + "NTQueries", tags).increment(ntQueries);
             meterRegistry.counter(baseName + "TQueries", tags).increment(tQueries);
             meterRegistry.counter(baseName + "TimeTakenNs", tags).increment(timeTakenNs);
-            meterRegistry.counter(baseName + "EmptyTransactions", tags).increment(das.getAndResetEmptyTransactionsCount());
+            meterRegistry.counter(baseName + "EmptyTransactions", tags)
+                         .increment(das.getAndResetEmptyTransactionsCount());
         });
-    }
-
-    private String normalizeName(String name) {
-        return StringUtils.replaceChars(name, '.', '_');
-    }
-
-    private DistributionSummary summaryWithoutBuckets(String name, Iterable<Tag> tags) {
-        return DistributionSummary.builder(name).tags(tags)
-            .publishPercentileHistogram(false)
-            .maximumExpectedValue(1L) // TODO: this limits number on buckets and is currently needed because the above histogram disabling does not work due to many services using management.metrics.distribution.percentiles-histogram.all = true.
-            // remove it when services start using histograms sensibly
-            .register(meterRegistry);
-    }
-
-    private Timer timerWithoutBuckets(String name, Iterable<Tag> tags) {
-        return Timer.builder(name).tags(tags)
-            .publishPercentileHistogram(false)
-            .minimumExpectedValue(Duration.ofNanos(1L))
-            .maximumExpectedValue(Duration.ofNanos(1L)) // TODO: last two are limiting number on buckets and are currently needed because the above histogram disabling does not work due to many services using management.metrics.distribution.percentiles-histogram.all = true.
-            // remove those when services start using histograms sensibly
-            .register(meterRegistry);
     }
 }

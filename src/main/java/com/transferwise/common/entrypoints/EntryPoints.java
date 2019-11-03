@@ -16,13 +16,13 @@ public class EntryPoints {
         }
     };
 
-    private final List<EntryPointInterceptor> interceptors;
+    private final List<IEntryPointInterceptor> interceptors;
 
-    public EntryPoints(List<EntryPointInterceptor> interceptors) {
+    public EntryPoints(List<IEntryPointInterceptor> interceptors) {
         this.interceptors = interceptors;
     }
 
-    public void addInterceptor(EntryPointInterceptor interceptor) {
+    public void addInterceptor(IEntryPointInterceptor interceptor) {
         interceptors.add(interceptor);
     }
 
@@ -58,6 +58,8 @@ public class EntryPoints {
         if (interceptorIdx >= interceptors.size()) {
             return callable.call();
         }
-        return interceptors.get(interceptorIdx).inEntryPointContext(context, unknownContext, () -> inEntryPointContext(context, callable, interceptorIdx + 1));
+        return interceptors.get(interceptorIdx)
+                           .inEntryPointContext(context, unknownContext, () -> inEntryPointContext(context, callable,
+                                                                                                   interceptorIdx + 1));
     }
 }
