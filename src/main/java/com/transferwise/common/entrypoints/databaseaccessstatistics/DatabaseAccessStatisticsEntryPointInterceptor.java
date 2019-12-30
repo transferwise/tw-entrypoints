@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.summaryWithoutBuckets;
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.timerWithoutBuckets;
 
@@ -50,13 +51,16 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
     @SuppressWarnings("checkstyle:MagicNumber")
     private void registerCall(EntryPointContext context) {
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
-            String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
-            if (entryPointsRegistry.registerEntryPoint(context.getName())) {
+            if (entryPointsRegistry.registerEntryPoint(context)) {
                 //TODO: Should be renamed from EntryPoints to something referring to DatabaseAccessStatistics.
-                String baseName = "EntryPoints.Das.Registered.";
-                Tag dbTag = Tag.of("db", das.getDatabaseName());
-                Tag entryPointNameTag = Tag.of("entryPointName", name);
-                List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag);
+                String baseName = TAG_PREFIX_ENTRYPOINTS + "Das.Registered.";
+                Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
+                String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
+                Tag entryPointNameTag = Tag.of(EntryPointsMetricUtils.TAG_ENTRYPOINT_NAME, name);
+                String group = EntryPointsMetricUtils.normalizeNameForMetric(context.getGroup());
+                Tag entryPointGroupTag = Tag.of(EntryPointsMetricUtils.TAG_ENTRYPOINT_GROUP, group);
+
+                List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag, entryPointGroupTag);
 
                 long commitsCount = das.getCommitsCount();
                 long rollbacksCount = das.getRollbacksCount();
@@ -87,7 +91,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
 
     private void registerUnknownCalls(EntryPointContext unknownContext) {
         DatabaseAccessStatistics.getAll(unknownContext).forEach((das) -> {
-            Tag dbTag = Tag.of("db", das.getDatabaseName());
+            Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
             List<Tag> tags = Collections.singletonList(dbTag);
 
             long commits = das.getAndResetCommitsCount();
@@ -95,7 +99,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
             long ntQueries = das.getAndResetNonTransactionalQueriesCount();
             long tQueries = das.getAndResetTransactionalQueriesCount();
             long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
-            String baseName = "EntryPoints.Das.Unknown.";
+            String baseName = TAG_PREFIX_ENTRYPOINTS + "Das.Unknown.";
 
             meterRegistry.counter(baseName + "Commits", tags).increment(commits);
             meterRegistry.counter(baseName + "Rollbacks", tags).increment(rollbacks);

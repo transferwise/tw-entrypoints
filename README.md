@@ -32,7 +32,7 @@ does not allow to do queries like "Give me a list of transactions ordered by com
 
 You can also use Database Access Statistics in test code, for example to verify that your hibernate magic code does not have any N+1 problem:
 ```groovy
-entryPoints.inEntryPointContext("bankAccountApi", {
+entryPoints.in("Test", "bankAccountApi", {
 	controller.findAll()
 
 	def das = DatabaseAccessStatistics.get(EntryPoints.currentContext(), "masterdb")

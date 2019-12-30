@@ -10,6 +10,9 @@ import java.time.Duration;
 
 public class EntryPointsMetricUtils {
     public static final String TAG_ENTRYPOINT_NAME = "entryPointName";
+    public static final String TAG_ENTRYPOINT_GROUP = "entryPointGroup";
+    public static final String TAG_DATABASE = "db";
+    public static final String TAG_PREFIX_ENTRYPOINTS = "EntryPoints.";
 
     public static String normalizeNameForMetric(String name) {
         return StringUtils.replaceChars(name, '.', '_');

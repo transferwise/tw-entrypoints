@@ -5,10 +5,12 @@ import com.transferwise.common.baseutils.ExceptionUtils;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static com.transferwise.common.entrypoints.EntryPointContext.GROUP_GENERIC;
+
 public class EntryPoints {
     private final static ThreadLocal<EntryPointContext> contexts = new ThreadLocal<>();
 
-    private final EntryPointContext unknownContext = new EntryPointContext("unknown") {
+    private final EntryPointContext unknownContext = new EntryPointContext(GROUP_GENERIC, "unknown") {
         @Override
         public EntryPointContext setName(String name) {
             // no-op
@@ -26,10 +28,10 @@ public class EntryPoints {
         interceptors.add(interceptor);
     }
 
-    public <T> T inEntryPointContext(String name, Callable<T> callable) {
+    public <T> T in(String group, String name, Callable<T> callable) {
         EntryPointContext currentContext = contexts.get();
         try {
-            EntryPointContext context = new EntryPointContext(name);
+            EntryPointContext context = new EntryPointContext(group, name);
             contexts.set(context);
 
             return ExceptionUtils.doUnchecked(() -> inEntryPointContext(context, callable, 0));
@@ -38,6 +40,25 @@ public class EntryPoints {
         }
     }
 
+    public void in(String group, String name, Runnable runnable) {
+        in(group, name, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    @Deprecated
+    /**
+     * @deprecated use {@link #in(String, String, Callable)} instead.
+     */
+    public <T> T inEntryPointContext(String name, Callable<T> callable) {
+        return in(GROUP_GENERIC, name, callable);
+    }
+
+    @Deprecated
+    /**
+     * @deprecated use {@link #in(String, String, Runnable)} instead.
+     */
     public void inEntryPointContext(String name, Runnable runnable) {
         inEntryPointContext(name, () -> {
             runnable.run();

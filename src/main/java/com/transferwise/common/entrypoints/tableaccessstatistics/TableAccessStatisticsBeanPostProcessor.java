@@ -1,8 +1,10 @@
-package com.transferwise.common.entrypoints.databaseaccessstatistics;
+package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
 import com.transferwise.common.entrypoints.EntryPoints;
+import com.transferwise.common.entrypoints.EntryPointsRegistry;
 import com.transferwise.common.spyql.SpyqlDataSource;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,13 +12,15 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import javax.sql.DataSource;
 
-public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
+public class TableAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
     @Value("${spring.application.name:generic-service}")
     private String appName;
+    @Value("${tw-entrypoints.tas.sql-parser.cache-size-mib:50}")
+    private int sqlParserCacheSizeMib;
 
     private final BeanFactory beanFactory;
 
-    public DatabaseAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+    public TableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
 
@@ -33,10 +37,9 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                 if (!dataSource.isWrapperFor(SpyqlDataSource.class)) {
                     return bean;
                 }
-
                 SpyqlDataSource spyqlDataSource = dataSource.unwrap(SpyqlDataSource.class);
                 boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
-                    (l) -> l instanceof DatabaseAccessStatisticsSpyqlListener);
+                    (l) -> l instanceof TableAccessStatisticsSpyqlListener);
 
                 if (isAlreadyAttached) {
                     return bean;
@@ -46,7 +49,10 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                     databaseName = appName.replaceAll("-service", "");
                 }
                 spyqlDataSource.addListener(
-                    new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class), databaseName));
+                    new TableAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class),
+                                                           beanFactory.getBean(EntryPointsRegistry.class),
+                                                           beanFactory.getBean(MeterRegistry.class),
+                                                           databaseName, sqlParserCacheSizeMib));
             }
 
             return bean;

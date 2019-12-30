@@ -18,7 +18,7 @@ public class EntryPointServletFilter extends OncePerRequestFilter {
         // We could get too many entry points here, so for initial version, we will not use for example request.getRequestUri().toString() as name.
         // Currently Grails filter will later overwrite the name, as soon as we get controller and action information.
         // If we start seeing stats for "servletRequest", we may rethink it.
-        entryPoints.inEntryPointContext("servletRequest", () -> {
+        entryPoints.in("Web", "servletRequest", () -> {
             filterChain.doFilter(request, response);
             return null;
         });
