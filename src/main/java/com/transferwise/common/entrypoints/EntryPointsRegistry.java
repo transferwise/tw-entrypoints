@@ -20,8 +20,9 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PRE
  */
 @Slf4j
 public class EntryPointsRegistry implements IEntryPointsRegistry {
-    @Value("${tw-entrypoints.max-distinct-entry-points:2000}")
-    private int maxDistinctEntryPointsCount;
+    @Value("${tw-entrypoints.max-distinct-entry-points:3000}")
+    @SuppressWarnings("checkstyle:magicnumber")
+    private int maxDistinctEntryPointsCount = 3000;
 
     private MeterRegistry meterRegistry;
     private Lock registrationLock = new ReentrantLock();
