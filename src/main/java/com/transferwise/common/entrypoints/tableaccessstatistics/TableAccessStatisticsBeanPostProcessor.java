@@ -1,6 +1,8 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
+import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
+import com.transferwise.common.baseutils.concurrency.ThreadNamingExecutorServiceWrapper;
 import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.entrypoints.EntryPointsRegistry;
 import com.transferwise.common.spyql.SpyqlDataSource;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import javax.sql.DataSource;
+import java.util.concurrent.ExecutorService;
 
 public class TableAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
     @Value("${spring.application.name:generic-service}")
@@ -48,10 +51,16 @@ public class TableAccessStatisticsBeanPostProcessor implements BeanPostProcessor
                 if (databaseName == null) {
                     databaseName = appName.replaceAll("-service", "");
                 }
+
+                EntryPoints entryPoints = beanFactory.getBean(EntryPoints.class);
+                EntryPointsRegistry entryPointsRegistry = beanFactory.getBean(EntryPointsRegistry.class);
+                MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
+                ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
+                    .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
+
                 spyqlDataSource.addListener(
-                    new TableAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class),
-                                                           beanFactory.getBean(EntryPointsRegistry.class),
-                                                           beanFactory.getBean(MeterRegistry.class),
+                    new TableAccessStatisticsSpyqlListener(entryPoints, entryPointsRegistry, meterRegistry,
+                                                           executorService,
                                                            databaseName, sqlParserCacheSizeMib));
             }
 

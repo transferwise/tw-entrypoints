@@ -1,5 +1,7 @@
 package com.transferwise.common.entrypoints.config;
 
+import com.transferwise.common.baseutils.concurrency.DefaultExecutorServicesProvider;
+import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.entrypoints.EntryPointNamingServletFilter;
 import com.transferwise.common.entrypoints.EntryPointServletFilter;
 import com.transferwise.common.entrypoints.EntryPoints;
@@ -15,6 +17,7 @@ import com.transferwise.tasks.processing.ITaskProcessingInterceptor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -95,5 +98,11 @@ public class EntryPointsAutoConfiguration {
     @Bean
     public ExecutionStatisticsEntryPointInterceptor executionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry, IEntryPointsRegistry entryPointsRegistry) {
         return new ExecutionStatisticsEntryPointInterceptor(meterRegistry, entryPointsRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(IExecutorServicesProvider.class)
+    public DefaultExecutorServicesProvider twDefaultExecutorServicesProvider() {
+        return new DefaultExecutorServicesProvider();
     }
 }

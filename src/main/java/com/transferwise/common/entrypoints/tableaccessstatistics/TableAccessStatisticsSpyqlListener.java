@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
 
@@ -44,14 +45,17 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     private LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
     public TableAccessStatisticsSpyqlListener(EntryPoints entryPoints, IEntryPointsRegistry entryPointsRegistry,
-                                              MeterRegistry meterRegistry, String databaseName, long sqlParserCacheSizeMib) {
+                                              MeterRegistry meterRegistry, Executor executor,
+                                              String databaseName, long sqlParserCacheSizeMib) {
         this.entryPoints = entryPoints;
         this.databaseName = databaseName;
         this.meterRegistry = meterRegistry;
         this.entryPointsRegistry = entryPointsRegistry;
 
-        sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(sqlParserCacheSizeMib * MIB)
-                                       .weigher((String k, SqlParseResult v) -> k.length()).build(sql -> parseSql(sql));
+        sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(sqlParserCacheSizeMib * MIB).recordStats()
+                                       .executor(executor)
+                                       .weigher((String k, SqlParseResult v) -> k.length() * 2)
+                                       .build(sql -> parseSql(sql));
 
         CaffeineCacheMetrics
             .monitor(meterRegistry, sqlParseResultsCache, TAG_PREFIX_ENTRYPOINTS + "Tas.sqlParseResultsCache");
