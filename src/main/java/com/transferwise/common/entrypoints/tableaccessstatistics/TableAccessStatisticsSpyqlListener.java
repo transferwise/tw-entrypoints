@@ -12,9 +12,9 @@ import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 
 @Slf4j
 public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
@@ -57,8 +57,10 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
                                        .weigher((String k, SqlParseResult v) -> k.length() * 2)
                                        .build(sql -> parseSql(sql));
 
-        CaffeineCacheMetrics
-            .monitor(meterRegistry, sqlParseResultsCache, TAG_PREFIX_ENTRYPOINTS + "Tas.sqlParseResultsCache");
+        String meterPrefix = METRIC_PREFIX_ENTRYPOINTS + "Tas.SqlParseResultsCache.";
+        Gauge.builder(meterPrefix + "size", () -> sqlParseResultsCache.estimatedSize()).register(meterRegistry);
+        Gauge.builder(meterPrefix + "hitRatio", () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
+        Gauge.builder(meterPrefix + "hitCount", () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
     }
 
     @Override
@@ -90,7 +92,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
             }
         } catch (Throwable t) {
             meterRegistry
-                .counter(TAG_PREFIX_ENTRYPOINTS + "Tas.FailedParses", EntryPointsMetricUtils.TAG_DATABASE, databaseName)
+                .counter(METRIC_PREFIX_ENTRYPOINTS + "Tas.FailedParses", EntryPointsMetricUtils.TAG_DATABASE,
+                         databaseName)
                 .increment();
             log.debug(t.getMessage(), t);
         }
@@ -135,7 +138,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
                             .asList(dbTag, entryPointNameTag, entryPointGroupTag, successTag, operationTag, tableTag,
                                     inTransactionTag);
 
-                        meterRegistry.counter(TAG_PREFIX_ENTRYPOINTS + "Tas.TableAccess", tags).increment();
+                        meterRegistry.counter(METRIC_PREFIX_ENTRYPOINTS + "Tas.TableAccess", tags).increment();
                     }
                 });
             }

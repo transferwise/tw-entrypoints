@@ -11,7 +11,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 
 public class ExecutionStatisticsEntryPointInterceptor implements IEntryPointInterceptor {
     private MeterRegistry meterRegistry;
@@ -34,8 +34,9 @@ public class ExecutionStatisticsEntryPointInterceptor implements IEntryPointInte
 
                 Tags tags = Tags.of(EntryPointsMetricUtils.TAG_ENTRYPOINT_NAME, name,
                                     EntryPointsMetricUtils.TAG_ENTRYPOINT_GROUP, group);
-                EntryPointsMetricUtils.timerWithoutBuckets(meterRegistry, TAG_PREFIX_ENTRYPOINTS + "Es.timeTaken", tags)
-                                      .record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);
+                EntryPointsMetricUtils
+                    .timerWithoutBuckets(meterRegistry, METRIC_PREFIX_ENTRYPOINTS + "Es.timeTaken", tags)
+                    .record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);
             }
         }
     }

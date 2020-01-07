@@ -105,6 +105,8 @@ class TableAccessStatisticsIntSpec extends BaseIntSpec {
             ((Counter) meters[0]).count() == 3
         and:
             getParserCache().estimatedSize() == 1
+        and:
+            meterRegistry.getMeters().findAll { it.id.name == "EntryPoints.Tas.SqlParseResultsCache.size" }[0].value() == 1
     }
 
     private LoadingCache getParserCache() {

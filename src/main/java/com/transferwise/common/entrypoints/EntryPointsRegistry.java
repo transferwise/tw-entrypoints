@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 
 /**
  * Goal is to prevent OOM but also to protect Prometheus, if someone starts spamming with too many different entrypoints names.
@@ -36,7 +36,8 @@ public class EntryPointsRegistry implements IEntryPointsRegistry {
 
     @PostConstruct
     public void init() {
-        registeredNamesCount = meterRegistry.gauge(TAG_PREFIX_ENTRYPOINTS + "RegistrationsCount", new AtomicInteger());
+        registeredNamesCount = meterRegistry
+            .gauge(METRIC_PREFIX_ENTRYPOINTS + "RegistrationsCount", new AtomicInteger());
     }
 
     @Override

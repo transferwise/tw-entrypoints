@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.TAG_PREFIX_ENTRYPOINTS;
+import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.summaryWithoutBuckets;
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.timerWithoutBuckets;
 
@@ -53,7 +53,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
             if (entryPointsRegistry.registerEntryPoint(context)) {
                 //TODO: Should be renamed from EntryPoints to something referring to DatabaseAccessStatistics.
-                String baseName = TAG_PREFIX_ENTRYPOINTS + "Das.Registered.";
+                String baseName = METRIC_PREFIX_ENTRYPOINTS + "Das.Registered.";
                 Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
                 String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
                 Tag entryPointNameTag = Tag.of(EntryPointsMetricUtils.TAG_ENTRYPOINT_NAME, name);
@@ -99,7 +99,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
             long ntQueries = das.getAndResetNonTransactionalQueriesCount();
             long tQueries = das.getAndResetTransactionalQueriesCount();
             long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
-            String baseName = TAG_PREFIX_ENTRYPOINTS + "Das.Unknown.";
+            String baseName = METRIC_PREFIX_ENTRYPOINTS + "Das.Unknown.";
 
             meterRegistry.counter(baseName + "Commits", tags).increment(commits);
             meterRegistry.counter(baseName + "Rollbacks", tags).increment(rollbacks);
