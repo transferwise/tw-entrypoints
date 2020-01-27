@@ -2,11 +2,10 @@ package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.transferwise.common.entrypoints.EntryPointContext;
+import com.transferwise.common.baseutils.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
-import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatistics;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
@@ -65,12 +64,6 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
     @Override
     public SpyqlConnectionListener onGetConnection(GetConnectionEvent event) {
-        DatabaseAccessStatistics databaseAccessStatistics = DatabaseAccessStatistics
-            .get(entryPoints.currentContext(), databaseName);
-        if (databaseAccessStatistics != null) {
-            databaseAccessStatistics.registerConnectionOpened();
-        }
-
         return new ConnectionListener();
     }
 
@@ -117,10 +110,13 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         }
 
         protected void registerSql(String sql, boolean isInTransaction, boolean succeeded) {
-            EntryPointContext context = entryPoints.currentContextOrUnknown();
-            if (entryPointsRegistry.registerEntryPoint(context)) {
-                String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
-                String group = EntryPointsMetricUtils.normalizeNameForMetric(context.getGroup());
+            TwContext context = TwContext.current();
+            String epName = context == null || context.getName() == null ? EntryPoints.NAME_UNKNOWN : context.getName();
+            String epGroup = context == null ? TwContext.GROUP_GENERIC : context.getGroup();
+
+            if (entryPointsRegistry.registerEntryPoint(epGroup, epName)) {
+                String name = EntryPointsMetricUtils.normalizeNameForMetric(epName);
+                String group = EntryPointsMetricUtils.normalizeNameForMetric(epGroup);
 
                 SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql);
 

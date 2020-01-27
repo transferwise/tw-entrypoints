@@ -1,7 +1,7 @@
 package com.transferwise.common.entrypoints;
 
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 public interface IEntryPointInterceptor {
-    <T> T inEntryPointContext(EntryPointContext context, EntryPointContext unknownContext, Callable<T> callable) throws Exception;
+    <T> T inEntryPointContext(Supplier<T> supplier);
 }

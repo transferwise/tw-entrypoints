@@ -1,15 +1,15 @@
 package com.transferwise.common.entrypoints.executionstatistics;
 
 import com.transferwise.common.baseutils.clock.ClockHolder;
-import com.transferwise.common.entrypoints.EntryPointContext;
+import com.transferwise.common.baseutils.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import com.transferwise.common.entrypoints.IEntryPointInterceptor;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 
@@ -23,14 +23,15 @@ public class ExecutionStatisticsEntryPointInterceptor implements IEntryPointInte
     }
 
     @Override
-    public <T> T inEntryPointContext(EntryPointContext context, EntryPointContext unknownContext, Callable<T> callable) throws Exception {
+    public <T> T inEntryPointContext(Supplier<T> supplier) {
         long startTimeMs = ClockHolder.getClock().millis();
         try {
-            return callable.call();
+            return supplier.get();
         } finally {
-            if (entryPointsRegistry.registerEntryPoint(context)) {
-                String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
-                String group = EntryPointsMetricUtils.normalizeNameForMetric(context.getGroup());
+            TwContext twContext = TwContext.current();
+            if (twContext != null && entryPointsRegistry.registerEntryPoint(twContext)) {
+                String name = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getName());
+                String group = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getGroup());
 
                 Tags tags = Tags.of(EntryPointsMetricUtils.TAG_ENTRYPOINT_NAME, name,
                                     EntryPointsMetricUtils.TAG_ENTRYPOINT_GROUP, group);

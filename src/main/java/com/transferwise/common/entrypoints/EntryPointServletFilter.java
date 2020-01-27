@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints;
 
+import com.transferwise.common.baseutils.ExceptionUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -7,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class EntryPointServletFilter extends OncePerRequestFilter {
+    public static final String GENERIC_NAME = "servletRequest";
+
     private final EntryPoints entryPoints;
 
     public EntryPointServletFilter(EntryPoints entryPoints) {
@@ -15,11 +18,8 @@ public class EntryPointServletFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
-        // We could get too many entry points here, so for initial version, we will not use for example request.getRequestUri().toString() as name.
-        // Currently Grails filter will later overwrite the name, as soon as we get controller and action information.
-        // If we start seeing stats for "servletRequest", we may rethink it.
-        entryPoints.in("Web", "servletRequest", () -> {
-            filterChain.doFilter(request, response);
+        entryPoints.of("Web", GENERIC_NAME).execute(() -> {
+            ExceptionUtils.doUnchecked(() -> filterChain.doFilter(request, response));
             return null;
         });
     }

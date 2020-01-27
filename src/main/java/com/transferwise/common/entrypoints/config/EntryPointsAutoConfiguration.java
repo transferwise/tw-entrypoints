@@ -70,7 +70,8 @@ public class EntryPointsAutoConfiguration {
 
     @Bean
     public EntryPoints entryPoints(List<IEntryPointInterceptor> entryPointInterceptors) {
-        return new EntryPoints(entryPointInterceptors);
+        EntryPoints entryPoints = new EntryPoints(entryPointInterceptors);
+        return entryPoints;
     }
 
     @Bean

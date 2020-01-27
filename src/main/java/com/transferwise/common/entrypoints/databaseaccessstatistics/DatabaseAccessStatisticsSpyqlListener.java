@@ -1,7 +1,17 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
+import com.transferwise.common.baseutils.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPoints;
-import com.transferwise.common.spyql.event.*;
+import com.transferwise.common.spyql.event.ConnectionCloseEvent;
+import com.transferwise.common.spyql.event.ConnectionCloseFailureEvent;
+import com.transferwise.common.spyql.event.GetConnectionEvent;
+import com.transferwise.common.spyql.event.StatementExecuteEvent;
+import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
+import com.transferwise.common.spyql.event.TransactionBeginEvent;
+import com.transferwise.common.spyql.event.TransactionCommitEvent;
+import com.transferwise.common.spyql.event.TransactionCommitFailureEvent;
+import com.transferwise.common.spyql.event.TransactionRollbackEvent;
+import com.transferwise.common.spyql.event.TransactionRollbackFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +32,8 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
     @Override
     public SpyqlConnectionListener onGetConnection(GetConnectionEvent event) {
-        DatabaseAccessStatistics databaseAccessStatistics = DatabaseAccessStatistics.get(entryPoints.currentContext(), databaseName);
+        DatabaseAccessStatistics databaseAccessStatistics = DatabaseAccessStatistics
+            .get(TwContext.current(), databaseName);
         if (databaseAccessStatistics != null) {
             databaseAccessStatistics.registerConnectionOpened();
         }
@@ -95,7 +106,7 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
         }
 
         private DatabaseAccessStatistics currentDas() {
-            return DatabaseAccessStatistics.get(entryPoints.currentContextOrUnknown(), databaseName);
+            return DatabaseAccessStatistics.get(DatabaseAccessStatistics.currentTwContextOrUnknown(), databaseName);
         }
 
         private void registerEmptyTransaction() {

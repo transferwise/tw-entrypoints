@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints;
 
+import com.transferwise.common.baseutils.context.TwContext;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
 
@@ -18,7 +19,7 @@ public class EntryPointNamingServletFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        EntryPointContext context = entryPoints.currentContext();
+        TwContext context = TwContext.current();
         if (context == null) {
             filterChain.doFilter(request, response);
             return;
@@ -28,7 +29,7 @@ public class EntryPointNamingServletFilter extends OncePerRequestFilter {
 
         Object mapping = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         if (mapping != null) {
-            context.setName(String.valueOf(mapping));
+            context.replaceValueDeep(TwContext.NAME_KEY, EntryPointServletFilter.GENERIC_NAME, String.valueOf(mapping));
             nameSet = true;
         }
 
@@ -37,7 +38,8 @@ public class EntryPointNamingServletFilter extends OncePerRequestFilter {
         if (!nameSet) {
             mapping = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
             if (mapping != null) {
-                context.setName(String.valueOf(mapping));
+                context.replaceValueDeep(TwContext.NAME_KEY, EntryPointServletFilter.GENERIC_NAME,
+                                         String.valueOf(mapping));
             }
         }
     }

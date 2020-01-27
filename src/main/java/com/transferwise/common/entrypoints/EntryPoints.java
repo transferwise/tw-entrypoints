@@ -1,22 +1,12 @@
 package com.transferwise.common.entrypoints;
 
-import com.transferwise.common.baseutils.ExceptionUtils;
+import com.transferwise.common.baseutils.context.TwContext;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-
-import static com.transferwise.common.entrypoints.EntryPointContext.GROUP_GENERIC;
+import java.util.function.Supplier;
 
 public class EntryPoints {
-    private final static ThreadLocal<EntryPointContext> contexts = new ThreadLocal<>();
-
-    private final EntryPointContext unknownContext = new EntryPointContext(GROUP_GENERIC, "unknown") {
-        @Override
-        public EntryPointContext setName(String name) {
-            // no-op
-            return this;
-        }
-    };
+    public static final String NAME_UNKNOWN = "unknown";
 
     private final List<IEntryPointInterceptor> interceptors;
 
@@ -28,59 +18,48 @@ public class EntryPoints {
         interceptors.add(interceptor);
     }
 
-    public <T> T in(String group, String name, Callable<T> callable) {
-        EntryPointContext currentContext = contexts.get();
-        try {
-            EntryPointContext context = new EntryPointContext(group, name);
-            contexts.set(context);
+    public Builder of(String group, String name) {
+        return new DefaultBuilder(this, group, name);
+    }
 
-            return ExceptionUtils.doUnchecked(() -> inEntryPointContext(context, callable, 0));
-        } finally {
-            contexts.set(currentContext);
+    public interface Builder {
+        <T> T execute(Supplier<T> supplier);
+
+        void execute(Runnable runnable);
+    }
+
+    public static class DefaultBuilder implements Builder {
+        private EntryPoints entryPoints;
+        private String group;
+        private String name;
+
+        public DefaultBuilder(EntryPoints entryPoints, String group, String name) {
+            this.entryPoints = entryPoints;
+            this.group = group;
+            this.name = name;
         }
-    }
 
-    public void in(String group, String name, Runnable runnable) {
-        in(group, name, () -> {
-            runnable.run();
-            return null;
-        });
-    }
-
-    @Deprecated
-    /**
-     * @deprecated use {@link #in(String, String, Callable)} instead.
-     */
-    public <T> T inEntryPointContext(String name, Callable<T> callable) {
-        return in(GROUP_GENERIC, name, callable);
-    }
-
-    @Deprecated
-    /**
-     * @deprecated use {@link #in(String, String, Runnable)} instead.
-     */
-    public void inEntryPointContext(String name, Runnable runnable) {
-        inEntryPointContext(name, () -> {
-            runnable.run();
-            return null;
-        });
-    }
-
-    public EntryPointContext currentContext() {
-        return contexts.get();
-    }
-
-    public EntryPointContext currentContextOrUnknown() {
-        EntryPointContext ctx = contexts.get();
-        return ctx == null ? unknownContext : ctx;
-    }
-
-    private <T> T inEntryPointContext(EntryPointContext context, Callable<T> callable, int interceptorIdx) throws Exception {
-        if (interceptorIdx >= interceptors.size()) {
-            return callable.call();
+        @Override
+        public <T> T execute(Supplier<T> supplier) {
+            TwContext twContext = TwContext.subContext().asEntryPoint(group, name);
+            return twContext.execute(() -> inEntryPointContext(supplier, 0));
         }
-        return interceptors.get(interceptorIdx)
-                           .inEntryPointContext(context, unknownContext, () -> inEntryPointContext(context, callable,
-                                                                                                   interceptorIdx + 1));
+
+        @Override
+        public void execute(Runnable runnable) {
+            execute(() -> {
+                runnable.run();
+                return null;
+            });
+        }
+
+        private <T> T inEntryPointContext(Supplier<T> supplier, int interceptorIdx) {
+            if (interceptorIdx >= entryPoints.interceptors.size()) {
+                return supplier.get();
+            }
+            return entryPoints.interceptors.get(interceptorIdx)
+                                           .inEntryPointContext(
+                                               () -> inEntryPointContext(supplier, interceptorIdx + 1));
+        }
     }
 }

@@ -13,6 +13,6 @@ public class EntryPointsTwTasksConfiguration {
 
     @Bean
     public ITaskProcessingInterceptor entryPointsTasksProcessingInterceptor() {
-        return (task, processor) -> entryPoints.in("TwTasks", task.getType(), processor);
+        return (task, processor) -> entryPoints.of("TwTasks", task.getType()).execute(processor);
     }
 }

@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints;
 
 
+import com.transferwise.common.baseutils.context.TwContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -41,12 +42,15 @@ public class EntryPointsRegistry implements IEntryPointsRegistry {
     }
 
     @Override
-    public boolean registerEntryPoint(EntryPointContext context) {
+    public boolean registerEntryPoint(TwContext context) {
         return registerEntryPoint(context.getGroup(), context.getName());
     }
 
     @Override
     public boolean registerEntryPoint(String group, String name) {
+        if (name == null) {
+            name = EntryPoints.NAME_UNKNOWN;
+        }
         Pair<String, String> key = Pair.of(group, name);
 
         registrationLock.lock();

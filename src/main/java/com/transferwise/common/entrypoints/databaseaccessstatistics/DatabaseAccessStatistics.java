@@ -1,6 +1,6 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.common.entrypoints.EntryPointContext;
+import com.transferwise.common.baseutils.context.TwContext;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,21 +13,37 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DatabaseAccessStatistics {
     public static final String ATTRIBUTE_KEY = "DatabaseAccessStatistics";
 
-    public static DatabaseAccessStatistics get(EntryPointContext entryPointContext, String databaseName) {
-        if (entryPointContext == null) {
-            return null;
+    public static TwContext unknownContext = new TwContext(null);
+
+    public static TwContext currentTwContextOrUnknown() {
+        TwContext twContext = TwContext.current();
+
+        if (twContext == null || twContext.getName() == null) {
+            return unknownContext;
         }
-        return (DatabaseAccessStatistics) entryPointContext.getAttributes()
-            .computeIfAbsent(ATTRIBUTE_KEY + "_" + databaseName, (key) -> new DatabaseAccessStatistics(databaseName));
+        return twContext;
     }
 
-    public static List<DatabaseAccessStatistics> getAll(EntryPointContext entryPointContext) {
+    public static DatabaseAccessStatistics get(TwContext twContext, String databaseName) {
+        if (twContext == null) {
+            return null;
+        }
+        String key = (ATTRIBUTE_KEY + "_" + databaseName);
+        DatabaseAccessStatistics das = twContext.get(key);
+        if (das == null) {
+            twContext.set(key, das = new DatabaseAccessStatistics(databaseName));
+        }
+
+        return das;
+    }
+
+    public static List<DatabaseAccessStatistics> getAll(TwContext twContext) {
         List<DatabaseAccessStatistics> result = new ArrayList<>();
-        if (entryPointContext == null) {
+        if (twContext == null) {
             return result;
         }
 
-        entryPointContext.getAttributes().forEach((k, v) -> {
+        twContext.getAttributes().forEach((k, v) -> {
             if (v instanceof DatabaseAccessStatistics) {
                 result.add((DatabaseAccessStatistics) v);
             }

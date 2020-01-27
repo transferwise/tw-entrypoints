@@ -6,7 +6,6 @@ import com.transferwise.common.entrypoints.test.BaseIntSpec
 import com.transferwise.common.spyql.SpyqlDataSource
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Meter
-import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 
@@ -14,33 +13,25 @@ import javax.sql.DataSource
 
 class TableAccessStatisticsIntSpec extends BaseIntSpec {
     @Autowired
-    private EntryPoints entryPoints;
-    @Autowired
     private DataSource dataSource;
-    @Autowired
-    private MeterRegistry meterRegistry;
 
     private JdbcTemplate jdbcTemplate
 
     def setup() {
         jdbcTemplate = new JdbcTemplate(dataSource)
 
-        meterRegistry.getMeters().findAll { it.id.name == "EntryPoints.Tas.TableAccess" }.forEach {
-            meterRegistry.remove(it)
-        }
-
         getParserCache().invalidateAll()
     }
 
     def "select to not existing table gets correctly registered"() {
         when:
-            entryPoints.in("Test", "myEntryPoint", {
+            entryPoints.of("Test", "myEntryPoint").execute {
                 try {
                     jdbcTemplate.queryForObject("select id from not_existing_table", Long.class)
                 }
                 catch (Exception ignored) {
                 }
-            })
+            }
 
             List<Meter> meters = meterRegistry.getMeters().findAll { it.id.name == "EntryPoints.Tas.TableAccess" }
         then:
@@ -56,9 +47,9 @@ class TableAccessStatisticsIntSpec extends BaseIntSpec {
 
     def "working update sql get correctly registered"() {
         when:
-            entryPoints.in("Test", "myEntryPoint", {
+            entryPoints.of("Test", "myEntryPoint").execute {
                 jdbcTemplate.update("update table_a set version=2")
-            })
+            }
 
             List<Meter> meters = meterRegistry.getMeters().findAll { it.id.name == "EntryPoints.Tas.TableAccess" }
         then:

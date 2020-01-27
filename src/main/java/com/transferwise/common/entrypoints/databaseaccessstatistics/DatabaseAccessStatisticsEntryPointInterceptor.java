@@ -1,6 +1,6 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.common.entrypoints.EntryPointContext;
+import com.transferwise.common.baseutils.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import com.transferwise.common.entrypoints.IEntryPointInterceptor;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
@@ -11,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.summaryWithoutBuckets;
@@ -34,13 +34,13 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
     }
 
     @Override
-    public <T> T inEntryPointContext(EntryPointContext context, EntryPointContext unknownContext, Callable<T> callable) throws Exception {
+    public <T> T inEntryPointContext(Supplier<T> supplier) {
         try {
-            return callable.call();
+            return supplier.get();
         } finally {
             try {
-                registerUnknownCalls(unknownContext);
-                registerCall(context);
+                registerUnknownCalls(DatabaseAccessStatistics.unknownContext);
+                registerCall(TwContext.current());
             } catch (Throwable t) {
                 // TODO: Maybe should be throttled.
                 log.error(t.getMessage(), t);
@@ -49,7 +49,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
     }
 
     @SuppressWarnings("checkstyle:MagicNumber")
-    private void registerCall(EntryPointContext context) {
+    private void registerCall(TwContext context) {
         DatabaseAccessStatistics.getAll(context).forEach((das) -> {
             if (entryPointsRegistry.registerEntryPoint(context)) {
                 //TODO: Should be renamed from EntryPoints to something referring to DatabaseAccessStatistics.
@@ -89,7 +89,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
         });
     }
 
-    private void registerUnknownCalls(EntryPointContext unknownContext) {
+    private void registerUnknownCalls(TwContext unknownContext) {
         DatabaseAccessStatistics.getAll(unknownContext).forEach((das) -> {
             Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
             List<Tag> tags = Collections.singletonList(dbTag);
