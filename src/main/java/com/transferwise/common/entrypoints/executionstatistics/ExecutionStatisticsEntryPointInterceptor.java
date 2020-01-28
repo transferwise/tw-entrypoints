@@ -2,8 +2,8 @@ package com.transferwise.common.entrypoints.executionstatistics;
 
 import com.transferwise.common.baseutils.clock.ClockHolder;
 import com.transferwise.common.baseutils.context.TwContext;
+import com.transferwise.common.baseutils.context.TwContextInterceptor;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
-import com.transferwise.common.entrypoints.IEntryPointInterceptor;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_PREFIX_ENTRYPOINTS;
 
-public class ExecutionStatisticsEntryPointInterceptor implements IEntryPointInterceptor {
+public class ExecutionStatisticsEntryPointInterceptor implements TwContextInterceptor {
     private MeterRegistry meterRegistry;
     private IEntryPointsRegistry entryPointsRegistry;
 
@@ -23,7 +23,12 @@ public class ExecutionStatisticsEntryPointInterceptor implements IEntryPointInte
     }
 
     @Override
-    public <T> T inEntryPointContext(Supplier<T> supplier) {
+    public boolean applies(TwContext context) {
+        return context.getCurrent(TwContext.NAME_KEY) != null;
+    }
+
+    @Override
+    public <T> T intercept(Supplier<T> supplier) {
         long startTimeMs = ClockHolder.getClock().millis();
         try {
             return supplier.get();

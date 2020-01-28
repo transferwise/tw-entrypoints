@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints
 
+import com.transferwise.common.baseutils.context.TwContext
 import com.transferwise.common.entrypoints.test.BaseIntSpec
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.DistributionSummary
@@ -24,7 +25,7 @@ class DatabaseAccessStatisticsIntSpec extends BaseIntSpec {
 
     def "select gets registered in an entrypoint"() {
         when:
-            entryPoints.of("Test", "myEntryPoint").execute {
+            TwContext.newSubContext().asEntryPoint("Test", "myEntryPoint").execute {
                 jdbcTemplate.queryForList("select * from table_a", Long.class)
             }
 
@@ -50,7 +51,7 @@ class DatabaseAccessStatisticsIntSpec extends BaseIntSpec {
             jdbcTemplate.queryForList("select * from table_a", Long.class)
 
             // Unknown context statistics will be converted to metrics on next entrypoints access.
-            entryPoints.of("group", "name").execute({});
+            TwContext.newSubContext().asEntryPoint("group", "name").execute({});
 
             def meters = metersAsMap()
         then:

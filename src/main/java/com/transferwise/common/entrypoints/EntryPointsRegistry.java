@@ -48,9 +48,6 @@ public class EntryPointsRegistry implements IEntryPointsRegistry {
 
     @Override
     public boolean registerEntryPoint(String group, String name) {
-        if (name == null) {
-            name = EntryPoints.NAME_UNKNOWN;
-        }
         Pair<String, String> key = Pair.of(group, name);
 
         registrationLock.lock();

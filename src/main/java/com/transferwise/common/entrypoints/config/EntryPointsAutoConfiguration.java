@@ -2,11 +2,10 @@ package com.transferwise.common.entrypoints.config;
 
 import com.transferwise.common.baseutils.concurrency.DefaultExecutorServicesProvider;
 import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
+import com.transferwise.common.baseutils.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPointNamingServletFilter;
 import com.transferwise.common.entrypoints.EntryPointServletFilter;
-import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.entrypoints.EntryPointsRegistry;
-import com.transferwise.common.entrypoints.IEntryPointInterceptor;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
@@ -26,7 +25,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 
 import javax.servlet.Servlet;
-import java.util.List;
 
 @Configuration
 public class EntryPointsAutoConfiguration {
@@ -40,8 +38,8 @@ public class EntryPointsAutoConfiguration {
     @ConditionalOnClass(Servlet.class)
     protected static class EntryPointsServletFilterConfiguration {
         @Bean
-        public EntryPointServletFilter entryPointServletFilter(EntryPoints entryPoints) {
-            return new EntryPointServletFilter(entryPoints);
+        public EntryPointServletFilter entryPointServletFilter() {
+            return new EntryPointServletFilter();
         }
 
         @Bean
@@ -54,8 +52,8 @@ public class EntryPointsAutoConfiguration {
         }
 
         @Bean
-        public EntryPointNamingServletFilter entryPointNamingServletFilter(EntryPoints entryPoints) {
-            return new EntryPointNamingServletFilter(entryPoints);
+        public EntryPointNamingServletFilter entryPointNamingServletFilter() {
+            return new EntryPointNamingServletFilter();
         }
 
         @Bean
@@ -69,15 +67,12 @@ public class EntryPointsAutoConfiguration {
     }
 
     @Bean
-    public EntryPoints entryPoints(List<IEntryPointInterceptor> entryPointInterceptors) {
-        EntryPoints entryPoints = new EntryPoints(entryPointInterceptors);
-        return entryPoints;
-    }
-
-    @Bean
     public DatabaseAccessStatisticsEntryPointInterceptor databaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry,
                                                                                                        IEntryPointsRegistry entryPointsRegistry) {
-        return new DatabaseAccessStatisticsEntryPointInterceptor(meterRegistry, entryPointsRegistry);
+        DatabaseAccessStatisticsEntryPointInterceptor interceptor = new DatabaseAccessStatisticsEntryPointInterceptor(
+            meterRegistry, entryPointsRegistry);
+        TwContext.addInterceptor(interceptor);
+        return interceptor;
     }
 
     @Bean
@@ -98,7 +93,10 @@ public class EntryPointsAutoConfiguration {
 
     @Bean
     public ExecutionStatisticsEntryPointInterceptor executionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry, IEntryPointsRegistry entryPointsRegistry) {
-        return new ExecutionStatisticsEntryPointInterceptor(meterRegistry, entryPointsRegistry);
+        ExecutionStatisticsEntryPointInterceptor interceptor = new ExecutionStatisticsEntryPointInterceptor(
+            meterRegistry, entryPointsRegistry);
+        TwContext.addInterceptor(interceptor);
+        return interceptor;
     }
 
     @Bean

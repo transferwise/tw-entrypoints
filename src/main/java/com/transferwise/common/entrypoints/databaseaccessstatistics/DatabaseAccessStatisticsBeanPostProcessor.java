@@ -1,7 +1,6 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
-import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -46,7 +45,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
                     databaseName = appName.replaceAll("-service", "");
                 }
                 spyqlDataSource.addListener(
-                    new DatabaseAccessStatisticsSpyqlListener(beanFactory.getBean(EntryPoints.class), databaseName));
+                    new DatabaseAccessStatisticsSpyqlListener(databaseName));
             }
 
             return bean;

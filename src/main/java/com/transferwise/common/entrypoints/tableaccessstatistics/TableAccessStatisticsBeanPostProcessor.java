@@ -3,7 +3,6 @@ package com.transferwise.common.entrypoints.tableaccessstatistics;
 import com.transferwise.common.baseutils.ExceptionUtils;
 import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.concurrency.ThreadNamingExecutorServiceWrapper;
-import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.entrypoints.EntryPointsRegistry;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -52,15 +51,13 @@ public class TableAccessStatisticsBeanPostProcessor implements BeanPostProcessor
                     databaseName = appName.replaceAll("-service", "");
                 }
 
-                EntryPoints entryPoints = beanFactory.getBean(EntryPoints.class);
                 EntryPointsRegistry entryPointsRegistry = beanFactory.getBean(EntryPointsRegistry.class);
                 MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
                 ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
                     .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
 
                 spyqlDataSource.addListener(
-                    new TableAccessStatisticsSpyqlListener(entryPoints, entryPointsRegistry, meterRegistry,
-                                                           executorService,
+                    new TableAccessStatisticsSpyqlListener(entryPointsRegistry, meterRegistry, executorService,
                                                            databaseName, sqlParserCacheSizeMib));
             }
 

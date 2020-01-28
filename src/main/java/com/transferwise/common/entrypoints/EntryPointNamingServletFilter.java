@@ -11,12 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class EntryPointNamingServletFilter extends OncePerRequestFilter {
-    private final EntryPoints entryPoints;
-
-    public EntryPointNamingServletFilter(EntryPoints entryPoints) {
-        this.entryPoints = entryPoints;
-    }
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         TwContext context = TwContext.current();

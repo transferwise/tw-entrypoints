@@ -1,7 +1,6 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.baseutils.context.TwContext;
-import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.spyql.event.ConnectionCloseEvent;
 import com.transferwise.common.spyql.event.ConnectionCloseFailureEvent;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
@@ -18,15 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
-    private final EntryPoints entryPoints;
     private String databaseName = "generic";
 
-    public DatabaseAccessStatisticsSpyqlListener(EntryPoints entryPoints) {
-        this.entryPoints = entryPoints;
+    public DatabaseAccessStatisticsSpyqlListener() {
     }
 
-    public DatabaseAccessStatisticsSpyqlListener(EntryPoints entryPoints, String databaseName) {
-        this(entryPoints);
+    public DatabaseAccessStatisticsSpyqlListener(String databaseName) {
         this.databaseName = databaseName;
     }
 

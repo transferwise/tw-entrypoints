@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints.test
 
-import com.transferwise.common.entrypoints.EntryPoints
+import com.transferwise.common.baseutils.context.TwContext
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import org.junit.Rule
 import org.mockito.junit.MockitoJUnit
@@ -17,18 +18,16 @@ import spock.lang.Specification
 @ContextConfiguration(loader = SpringBootContextLoader, initializers = DatabaseContainerInitializer)
 abstract class BaseIntSpec extends Specification {
     @Autowired
-    protected EntryPoints entryPoints;
-    @Autowired
     protected MeterRegistry meterRegistry;
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule()
 
     def setup() {
-        entryPoints.of("Test", "myEntryPoint").execute {
+        TwContext.newSubContext().asEntryPoint("Test", "myEntryPoint").execute {
             // Resetting unknown context counters
         }
-        meterRegistry.getMeters().findAll { it.id.name.startsWith("EntryPoints") }.forEach {
+        meterRegistry.getMeters().findAll { it.id.name.startsWith("EntryPoints") && !(it instanceof Gauge) }.forEach {
             meterRegistry.remove(it)
         }
     }

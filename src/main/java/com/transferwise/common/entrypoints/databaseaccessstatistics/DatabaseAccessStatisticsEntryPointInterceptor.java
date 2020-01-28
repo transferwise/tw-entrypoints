@@ -1,8 +1,8 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.baseutils.context.TwContext;
+import com.transferwise.common.baseutils.context.TwContextInterceptor;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
-import com.transferwise.common.entrypoints.IEntryPointInterceptor;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -23,7 +23,7 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.timerWi
  * TODO: Add support to read only transactions. Also count how many non transactional selects and updates there were.
  *       This is not important on MySQL 5.6 though.
  */
-public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPointInterceptor {
+public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextInterceptor {
     private final MeterRegistry meterRegistry;
 
     private IEntryPointsRegistry entryPointsRegistry;
@@ -33,8 +33,12 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements IEntryPoin
         this.entryPointsRegistry = entryPointsRegistry;
     }
 
+    public boolean applies(TwContext context) {
+        return context.getCurrent(TwContext.NAME_KEY) != null;
+    }
+
     @Override
-    public <T> T inEntryPointContext(Supplier<T> supplier) {
+    public <T> T intercept(Supplier<T> supplier) {
         try {
             return supplier.get();
         } finally {

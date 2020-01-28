@@ -3,7 +3,6 @@ package com.transferwise.common.entrypoints.tableaccessstatistics;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.transferwise.common.baseutils.context.TwContext;
-import com.transferwise.common.entrypoints.EntryPoints;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import com.transferwise.common.entrypoints.IEntryPointsRegistry;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
@@ -34,19 +33,19 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_
 
 @Slf4j
 public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
+    public static final String NAME_UNKNOWN = "unknown";
+
     private static final long MIB = 1_000_000;
 
-    private final EntryPoints entryPoints;
     private final MeterRegistry meterRegistry;
     private final IEntryPointsRegistry entryPointsRegistry;
     private final String databaseName;
 
     private LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
-    public TableAccessStatisticsSpyqlListener(EntryPoints entryPoints, IEntryPointsRegistry entryPointsRegistry,
+    public TableAccessStatisticsSpyqlListener(IEntryPointsRegistry entryPointsRegistry,
                                               MeterRegistry meterRegistry, Executor executor,
                                               String databaseName, long sqlParserCacheSizeMib) {
-        this.entryPoints = entryPoints;
         this.databaseName = databaseName;
         this.meterRegistry = meterRegistry;
         this.entryPointsRegistry = entryPointsRegistry;
@@ -111,7 +110,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
         protected void registerSql(String sql, boolean isInTransaction, boolean succeeded) {
             TwContext context = TwContext.current();
-            String epName = context == null || context.getName() == null ? EntryPoints.NAME_UNKNOWN : context.getName();
+            String epName = context == null || context.getName() == null ? NAME_UNKNOWN : context.getName();
             String epGroup = context == null ? TwContext.GROUP_GENERIC : context.getGroup();
 
             if (entryPointsRegistry.registerEntryPoint(epGroup, epName)) {
