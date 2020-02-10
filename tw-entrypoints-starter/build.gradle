@@ -1,0 +1,32 @@
+ext.projectName = "Transferwise EntryPoints Starter"
+ext.projectDescription = "Transferwise EntryPoints Starter - Spring Boot Starter for tw-entrypoints"
+ext.projectArtifactName = "tw-entrypoints-starter"
+
+apply from: '../build.common.gradle'
+
+dependencies {
+    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
+
+    implementation('org.springframework.boot:spring-boot-autoconfigure')
+    implementation('org.springframework:spring-context')
+    implementation(project(":tw-entrypoints"))
+    implementation 'com.transferwise.common:tw-base-utils:1.2.7'
+    implementation 'com.transferwise.common:tw-spyql-core:1.1.0'
+    implementation 'io.micrometer:micrometer-core'
+    implementation "com.transferwise.common:tw-context:${twContextVersion}"
+
+    runtimeOnly("com.transferwise.common:tw-context-starter:${twContextVersion}")
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    testImplementation 'com.zaxxer:HikariCP'
+    testImplementation 'org.mariadb.jdbc:mariadb-java-client'
+    testImplementation 'io.micrometer:micrometer-registry-prometheus'
+    testImplementation 'org.testcontainers:mariadb:1.12.5'
+    testImplementation("org.slf4j:slf4j-api")
+    testImplementation 'org.apache.commons:commons-lang3'
+    testImplementation 'com.github.ben-manes.caffeine:caffeine'
+
+    testRuntimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
+    testRuntimeOnly 'org.flywaydb:flyway-core'
+}

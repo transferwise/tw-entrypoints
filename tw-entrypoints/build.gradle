@@ -1,0 +1,18 @@
+ext.projectName = "Transferwise EntryPoints"
+ext.projectDescription = "Transferwise EntryPoints - Allows to track all applications entry points - REST calls, Kafka messages, jobs, threads."
+ext.projectArtifactName = "tw-entrypoints"
+
+apply from: '../build.common.gradle'
+
+dependencies {
+    implementation 'com.google.code.findbugs:annotations:3.0.1'
+    implementation 'io.micrometer:micrometer-core'
+    implementation 'org.apache.commons:commons-lang3'
+    implementation 'com.transferwise.common:tw-base-utils:1.2.7'
+    implementation 'com.transferwise.common:tw-spyql-core:1.1.0'
+    implementation 'com.github.jsqlparser:jsqlparser:3.1'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+    implementation("org.slf4j:slf4j-api")
+
+    api "com.transferwise.common:tw-context:${twContextVersion}"
+}
