@@ -5,7 +5,7 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.transferwise.common.context.TwContext;
-import com.transferwise.common.context.TwContextMetrics;
+import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
@@ -41,8 +41,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   final LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
-  public TableAccessStatisticsSpyqlListener(MeterRegistry meterRegistry, Executor executor,
-      String databaseName, long sqlParserCacheSizeMib) {
+  public TableAccessStatisticsSpyqlListener(MeterRegistry meterRegistry, Executor executor, String databaseName, long sqlParserCacheSizeMib) {
     this.databaseName = databaseName;
     this.meterRegistry = meterRegistry;
 
@@ -118,8 +117,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       sqlParseResult.operations.forEach((opName, op) -> {
         for (String tableName : op.getTableNames()) {
           Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, databaseName);
-          Tag entryPointNameTag = Tag.of(TwContextMetrics.TAG_EP_NAME, name);
-          Tag entryPointGroupTag = Tag.of(TwContextMetrics.TAG_EP_GROUP, group);
+          Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, name);
+          Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, group);
           Tag successTag = Tag.of("success", Boolean.toString(succeeded));
           Tag operationTag = Tag.of("operation", opName);
           Tag tableTag = Tag.of("table", tableName);

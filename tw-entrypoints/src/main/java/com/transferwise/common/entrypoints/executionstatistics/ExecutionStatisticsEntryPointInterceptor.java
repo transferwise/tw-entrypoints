@@ -5,7 +5,7 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.METRIC_
 import com.transferwise.common.baseutils.clock.ClockHolder;
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextExecutionInterceptor;
-import com.transferwise.common.context.TwContextMetrics;
+import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -35,7 +35,7 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
       String name = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getName());
       String group = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getGroup());
 
-      Tags tags = Tags.of(TwContextMetrics.TAG_EP_NAME, name, TwContextMetrics.TAG_EP_GROUP, group);
+      Tags tags = Tags.of(TwContextMetricsTemplate.TAG_EP_NAME, name, TwContextMetricsTemplate.TAG_EP_GROUP, group);
       EntryPointsMetricUtils
           .timerWithoutBuckets(meterRegistry, METRIC_PREFIX_ENTRYPOINTS + "Es.timeTaken", tags)
           .record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);

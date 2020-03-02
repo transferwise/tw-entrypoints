@@ -6,7 +6,7 @@ import static com.transferwise.common.entrypoints.EntryPointsMetricUtils.timerWi
 
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextExecutionInterceptor;
-import com.transferwise.common.context.TwContextMetrics;
+import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -53,9 +53,9 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       String baseName = METRIC_PREFIX_ENTRYPOINTS + "Das.Registered.";
       Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
       String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
-      Tag entryPointNameTag = Tag.of(TwContextMetrics.TAG_EP_NAME, name);
+      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, name);
       String group = EntryPointsMetricUtils.normalizeNameForMetric(context.getGroup());
-      Tag entryPointGroupTag = Tag.of(TwContextMetrics.TAG_EP_GROUP, group);
+      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, group);
 
       List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag, entryPointGroupTag);
 
