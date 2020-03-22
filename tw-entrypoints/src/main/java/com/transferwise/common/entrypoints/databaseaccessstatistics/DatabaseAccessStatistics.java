@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +35,8 @@ public class DatabaseAccessStatistics {
   private final AtomicLong transactionalQueriesCount = new AtomicLong();
   private final AtomicLong timeTakenInDatabaseNs = new AtomicLong();
   private final AtomicLong emptyTransactionsCount = new AtomicLong();
+  private final AtomicLong affectedRowsCount = new AtomicLong();
+  private final AtomicLong fetchedRowsCount = new AtomicLong();
 
   @Getter
   private long currentConnectionsCount = 0;
@@ -82,11 +85,6 @@ public class DatabaseAccessStatistics {
     return rollbacksCount.getAndSet(0);
   }
 
-  public void registerNonTransactionalQuery(long timeTakenNs) {
-    nonTransactionalQueriesCount.incrementAndGet();
-    timeTakenInDatabaseNs.addAndGet(timeTakenNs);
-  }
-
   public long getNonTransactionalQueriesCount() {
     return nonTransactionalQueriesCount.get();
   }
@@ -95,9 +93,22 @@ public class DatabaseAccessStatistics {
     return nonTransactionalQueriesCount.getAndSet(0);
   }
 
-  public void registerTransactionalQuery(long timeTakenNs) {
-    transactionalQueriesCount.incrementAndGet();
-    timeTakenInDatabaseNs.addAndGet(timeTakenNs);
+  public void registerQuery(StatementExecuteEvent event) {
+    if (event.isInTransaction()) {
+      transactionalQueriesCount.incrementAndGet();
+    } else {
+      nonTransactionalQueriesCount.incrementAndGet();
+    }
+    timeTakenInDatabaseNs.addAndGet(event.getExecutionTimeNs());
+    affectedRowsCount.addAndGet(event.getAffectedRowsCount());
+  }
+
+  public long getAffectedRowsCount() {
+    return affectedRowsCount.get();
+  }
+
+  public long getAndResetAffectedRowsCount() {
+    return affectedRowsCount.getAndSet(0);
   }
 
   public long getTransactionalQueriesCount() {
@@ -138,5 +149,17 @@ public class DatabaseAccessStatistics {
 
   public void registerEmptyTransaction() {
     emptyTransactionsCount.incrementAndGet();
+  }
+
+  public void registerRowsFetch(long rowsCount) {
+    fetchedRowsCount.addAndGet(rowsCount);
+  }
+
+  public long getFetchedRowsCount() {
+    return fetchedRowsCount.get();
+  }
+
+  public long getAndResetFetchedRowsCount() {
+    return fetchedRowsCount.getAndSet(0);
   }
 }

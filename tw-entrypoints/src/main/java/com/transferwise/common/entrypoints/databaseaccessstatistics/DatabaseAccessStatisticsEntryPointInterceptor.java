@@ -63,25 +63,26 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       long rollbacksCount = das.getRollbacksCount();
       long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
       long transactionalQueriesCount = das.getTransactionalQueriesCount();
+      long affectedRowsCount = das.getAffectedRowsCount();
+      long timeTakenInDatabaseNs = das.getTimeTakenInDatabaseNs();
+      long fetchedRowsCount = das.getFetchedRowsCount();
 
       summaryWithoutBuckets(meterRegistry, baseName + "Commits", tags).record(commitsCount);
       summaryWithoutBuckets(meterRegistry, baseName + "Rollbacks", tags).record(rollbacksCount);
       summaryWithoutBuckets(meterRegistry, baseName + "NTQueries", tags).record(nonTransactionalQueriesCount);
       summaryWithoutBuckets(meterRegistry, baseName + "TQueries", tags).record(transactionalQueriesCount);
-      summaryWithoutBuckets(meterRegistry, baseName + "MaxConcurrentConnections", tags)
-          .record(das.getMaxConnectionsCount());
-      summaryWithoutBuckets(meterRegistry, baseName + "RemainingOpenConnections", tags)
-          .record(das.getCurrentConnectionsCount());
-      summaryWithoutBuckets(meterRegistry, baseName + "EmptyTransactions", tags)
-          .record(das.getEmtpyTransactionsCount());
-      timerWithoutBuckets(meterRegistry, baseName + "TimeTaken", tags)
-          .record(das.getTimeTakenInDatabaseNs(), TimeUnit.NANOSECONDS);
+      summaryWithoutBuckets(meterRegistry, baseName + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
+      summaryWithoutBuckets(meterRegistry, baseName + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
+      summaryWithoutBuckets(meterRegistry, baseName + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
+      summaryWithoutBuckets(meterRegistry, baseName + "AffectedRows", tags).record(das.getAffectedRowsCount());
+      summaryWithoutBuckets(meterRegistry, baseName + "FetchedRows", tags).record(fetchedRowsCount);
+      timerWithoutBuckets(meterRegistry, baseName + "TimeTaken", tags).record(timeTakenInDatabaseNs, TimeUnit.NANOSECONDS);
 
       if (log.isDebugEnabled()) {
         log.debug(
             "Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount
-                + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (das
-                .getTimeTakenInDatabaseNs() / 1000_000) + "");
+                + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (timeTakenInDatabaseNs / 1000_000) + "; affectedRows="
+                + affectedRowsCount + "; fetchedRows=" + fetchedRowsCount);
       }
     });
   }
@@ -96,6 +97,10 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       long nonTransactionalQueries = das.getAndResetNonTransactionalQueriesCount();
       long transactionalQueries = das.getAndResetTransactionalQueriesCount();
       long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
+      long affectedRows = das.getAndResetAffectedRowsCount();
+      long emptyTransactions = das.getAndResetEmptyTransactionsCount();
+      long fetchedRows = das.getAndResetFetchedRowsCount();
+
       String baseName = METRIC_PREFIX_ENTRYPOINTS + "Das.Unknown.";
 
       meterRegistry.counter(baseName + "Commits", tags).increment(commits);
@@ -103,8 +108,9 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       meterRegistry.counter(baseName + "NTQueries", tags).increment(nonTransactionalQueries);
       meterRegistry.counter(baseName + "TQueries", tags).increment(transactionalQueries);
       meterRegistry.counter(baseName + "TimeTakenNs", tags).increment(timeTakenNs);
-      meterRegistry.counter(baseName + "EmptyTransactions", tags)
-          .increment(das.getAndResetEmptyTransactionsCount());
+      meterRegistry.counter(baseName + "EmptyTransactions", tags).increment(emptyTransactions);
+      meterRegistry.counter(baseName + "AffectedRows", tags).increment(affectedRows);
+      meterRegistry.counter(baseName + "FetchedRows", tags).increment(fetchedRows);
     });
   }
 

@@ -1,9 +1,12 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
+import static com.transferwise.common.context.TwContext.NAME_KEY;
+
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.spyql.event.ConnectionCloseEvent;
 import com.transferwise.common.spyql.event.ConnectionCloseFailureEvent;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
+import com.transferwise.common.spyql.event.ResultSetNextRowsEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
 import com.transferwise.common.spyql.event.TransactionBeginEvent;
@@ -13,6 +16,7 @@ import com.transferwise.common.spyql.event.TransactionRollbackEvent;
 import com.transferwise.common.spyql.event.TransactionRollbackFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -20,8 +24,23 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
   private final String databaseName;
 
+  /**
+   * When enabled, will log down database queries from outside entrypoints.
+   *
+   * <p>Useful for validating libraries and improving application quality.
+   *
+   * <p>Mostly meant to be enabled from test suites.
+   */
+  @Setter
+  private boolean strictMode;
+
   public DatabaseAccessStatisticsSpyqlListener(String databaseName) {
+    this(databaseName, false);
+  }
+
+  public DatabaseAccessStatisticsSpyqlListener(String databaseName, boolean strictMode) {
     this.databaseName = databaseName;
+    this.strictMode = strictMode;
   }
 
   @Override
@@ -66,19 +85,21 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
     @Override
     public void onStatementExecute(StatementExecuteEvent event) {
-      if (event.isInTransaction()) {
-        if (currentDas().isLogSql()) {
-          Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
-          log.info("TQ: " + event.getSql(), t);
+      if (strictMode) {
+        if (TwContext.current().get(NAME_KEY) == null) {
+          RuntimeException e = new RuntimeException("Statement executed outside of an entrypoint.");
+          log.error(e.getMessage(), e);
         }
-        currentDas().registerTransactionalQuery(event.getExecutionTimeNs());
-      } else {
-        if (currentDas().isLogSql()) {
-          Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
+      }
+      if (currentDas().isLogSql()) {
+        Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
+        if (event.isInTransaction()) {
+          log.info("TQ: " + event.getSql(), t);
+        } else {
           log.info("NTQ:" + event.getSql(), t);
         }
-        currentDas().registerNonTransactionalQuery(event.getExecutionTimeNs());
       }
+      currentDas().registerQuery(event);
     }
 
     @Override
@@ -94,6 +115,11 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
     @Override
     public void onConnectionCloseFailure(ConnectionCloseFailureEvent event) {
       currentDas().registerDatabaseAction(event.getExecutionTimeNs());
+    }
+
+    @Override
+    public void onResultSetNextRecords(ResultSetNextRowsEvent event) {
+      currentDas().registerRowsFetch(event.getRowsCount());
     }
 
     private DatabaseAccessStatistics currentDas() {
