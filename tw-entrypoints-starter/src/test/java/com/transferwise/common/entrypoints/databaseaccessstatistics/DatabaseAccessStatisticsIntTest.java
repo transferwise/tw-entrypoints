@@ -34,7 +34,7 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
   @Test
   public void selectGetsRegisteredInAnEntryPoint() {
     TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
-      jdbcTemplate.queryForList("select * from table_a", Long.class);
+      jdbcTemplate.queryForList("select id from table_a", Long.class);
     });
 
     Map<String, Meter> meters = metersAsMap();
@@ -48,6 +48,8 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
     assertThat(((Timer) meters.get("Registered.TimeTaken")).mean(TimeUnit.NANOSECONDS)).isGreaterThan(0);
     assertThat(((DistributionSummary) meters.get("Registered.Commits")).mean()).isEqualTo(0);
     assertThat(((DistributionSummary) meters.get("Registered.Rollbacks")).mean()).isEqualTo(0);
+    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).count()).isEqualTo(1);
 
     assertThat(((Counter) meters.get("Unknown.Commits")).count()).isEqualTo(0);
     assertThat(((Counter) meters.get("Unknown.NTQueries")).count()).isEqualTo(0);
@@ -56,7 +58,7 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
 
   @Test
   public void selectsGetsRegisteredOutsideOfAnEntrypoint() {
-    jdbcTemplate.queryForList("select * from table_a", Long.class);
+    jdbcTemplate.queryForList("select id from table_a", Long.class);
 
     // Unknown context statistics will be converted to metrics on next entrypoints access.
     TwContext.current().createSubContext().asEntryPoint("group", "name").execute(() -> {
@@ -67,6 +69,32 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
     assertThat(((Counter) meters.get("Unknown.Commits")).count()).isEqualTo(0);
     assertThat(((Counter) meters.get("Unknown.NTQueries")).count()).isEqualTo(1);
     assertThat(((Counter) meters.get("Unknown.TQueries")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown.AffectedRows")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown.FetchedRows")).count()).isEqualTo(0);
+  }
+
+  @Test
+  public void rowsStatisticsAreGathered() {
+    TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
+      for (int i = 0; i < 31; i++) {
+        jdbcTemplate.update("insert into table_a (id, version) values (?,?)", i, 0);
+      }
+
+      jdbcTemplate.update("update table_a set version=1 where id<7");
+
+      jdbcTemplate.update("delete from table_a where id >= 26");
+
+      jdbcTemplate.queryForList("select version from table_a", Integer.class);
+    });
+
+    Map<String, Meter> meters = metersAsMap();
+
+    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).count()).isEqualTo(1);
+
+    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).totalAmount()).isEqualTo(31 + 7 + 5);
+    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).totalAmount()).isEqualTo(31 - 5);
+
   }
 
   private Map<String, Meter> metersAsMap() {

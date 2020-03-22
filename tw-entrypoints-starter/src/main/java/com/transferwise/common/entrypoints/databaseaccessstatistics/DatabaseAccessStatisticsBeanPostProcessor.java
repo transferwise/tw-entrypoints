@@ -12,6 +12,9 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
   @Value("${spring.application.name:generic-service}")
   private String appName;
 
+  @Value("${tw-entrypoints.das.strictMode:false}")
+  private boolean strictMode;
+
   @Override
   public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
     return bean;
@@ -38,7 +41,7 @@ public class DatabaseAccessStatisticsBeanPostProcessor implements BeanPostProces
           databaseName = appName.replaceAll("-service", "");
         }
         spyqlDataSource.addListener(
-            new DatabaseAccessStatisticsSpyqlListener(databaseName));
+            new DatabaseAccessStatisticsSpyqlListener(databaseName, strictMode));
       }
 
       return bean;
