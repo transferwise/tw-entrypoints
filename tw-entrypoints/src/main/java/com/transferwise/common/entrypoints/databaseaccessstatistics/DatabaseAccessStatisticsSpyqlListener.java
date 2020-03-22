@@ -25,7 +25,7 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
   private final String databaseName;
 
   /**
-   * When enabled, will log down database queries from outside entrypoints.
+   * When enabled, will log an error, when database queries are done from outside of entrypoints.
    *
    * <p>Useful for validating libraries and improving application quality.
    *
