@@ -15,6 +15,9 @@ public class DatabaseContainerInitializer implements ApplicationContextInitializ
 
   @Override
   public void initialize(ConfigurableApplicationContext applicationContext) {
+    if ("true".equals(applicationContext.getEnvironment().getProperty("testcontainers.disabled"))) {
+      return;
+    }
     MariaDBContainer<? extends MariaDBContainer> mySqlContainer = startMariaDbTestContainer(applicationContext.getEnvironment());
     Integer mysqlPort = mySqlContainer.getMappedPort(3306);
     log.info("{} running on port {}", mySqlContainer.getDockerImageName(), mysqlPort);

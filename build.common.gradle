@@ -143,6 +143,7 @@ publishing {
 }
 
 test {
+    systemProperty("spring.profiles.include", System.getProperty("spring.profiles.include"))
     useJUnitPlatform()
     testLogging {
         events TestLogEvent.STARTED, TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED,

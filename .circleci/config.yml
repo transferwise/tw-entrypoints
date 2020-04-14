@@ -5,10 +5,17 @@ references:
     docker:
       - image: arti.tw.ee/circle_openjdk8:latest
         user: circleci
+      - image: circleci/mariadb:10.3
+        name: mysql1
+        command: mysqld --max_allowed_packet=32m --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --log_error_verbosity=1 --log_warnings=1
+        environment:
+          MYSQL_ROOT_PASSWORD: q1w2e3r4
+          MYSQL_DATABASE: mydb
     resource_class: medium
     environment:
       TERM: vt100
       GRADLE_OPTS: '-Dorg.gradle.console=plain'
+      IN_CIRCLE: true
   working_directory: &working_directory
     working_directory: ~/tw-entrypoints
 
@@ -25,7 +32,7 @@ jobs:
           command: ./gradlew assemble --console=plain --no-daemon
       - run:
           name: Run tests
-          command: ./gradlew check --console=plain --no-daemon --stacktrace
+          command: ./gradlew check --console=plain --no-daemon --stacktrace -Dspring.profiles.include=circle
       - save_cache:
           paths:
             - ~/.gradle/
