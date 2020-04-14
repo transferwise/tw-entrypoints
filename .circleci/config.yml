@@ -6,7 +6,6 @@ references:
       - image: arti.tw.ee/circle_openjdk8:latest
         user: circleci
       - image: circleci/mariadb:10.3
-        name: mysql1
         command: mysqld --max_allowed_packet=32m --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
         environment:
           MYSQL_ROOT_PASSWORD: q1w2e3r4
@@ -30,6 +29,9 @@ jobs:
       - run:
           name: Assemble jar
           command: ./gradlew assemble --console=plain --no-daemon
+      - run:
+          name: Wait for Db Initialization
+          command: dockerize -wait tcp://localhost:3306 -timeout 2m
       - run:
           name: Run tests
           command: ./gradlew check -Dspring.profiles.include=circle --console=plain --no-daemon --stacktrace
