@@ -8,8 +8,8 @@ dependencies {
     implementation 'com.google.code.findbugs:annotations:3.0.1'
     implementation 'io.micrometer:micrometer-core'
     implementation 'org.apache.commons:commons-lang3'
-    implementation 'com.transferwise.common:tw-base-utils:1.2.8'
-    implementation 'com.transferwise.common:tw-spyql-core:1.1.2'
+    implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
+    implementation "com.transferwise.common:tw-spyql-core:${twSpyqlCoreVersion}"
     implementation 'com.github.jsqlparser:jsqlparser:3.1'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation("org.slf4j:slf4j-api")
