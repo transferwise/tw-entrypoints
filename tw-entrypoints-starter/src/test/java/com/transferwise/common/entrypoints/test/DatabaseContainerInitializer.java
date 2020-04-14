@@ -15,7 +15,7 @@ public class DatabaseContainerInitializer implements ApplicationContextInitializ
 
   @Override
   public void initialize(ConfigurableApplicationContext applicationContext) {
-    if ("true".equals(applicationContext.getEnvironment().getProperty("testcontainers.disabled"))) {
+    if (applicationContext.getEnvironment().getProperty("embedded.mysql.port") != null) {
       return;
     }
     MariaDBContainer<? extends MariaDBContainer> mySqlContainer = startMariaDbTestContainer(applicationContext.getEnvironment());
