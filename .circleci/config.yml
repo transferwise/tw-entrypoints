@@ -55,7 +55,7 @@ jobs:
       - attach_workspace:
           at: ~/tw-entry-points
       - restore_cache:
-          key: tw-entry-points-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}
+          key: tw-entry-points-gradle-{{ checksum "build.gradle" }}-{{ checksum "build.common.gradle" }}
       - run:
           name: Set git config
           command: |
