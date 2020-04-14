@@ -25,7 +25,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: tw-entry-points-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}
+          key: tw-entrypoints-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}
       - run:
           name: Assemble jar
           command: ./gradlew assemble --console=plain --no-daemon
@@ -38,11 +38,11 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle/
-          key: tw-entry-points-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}
+          key: tw-entrypoints-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}
       - store_test_results:
-          path: ./tw-entry-points/build/test-results/
+          path: ./tw-entrypoints/build/test-results/
       - store_test_results:
-          path: ./tw-entry-points-starter/build/test-results/
+          path: ./tw-entrypoints-starter/build/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -53,9 +53,9 @@ jobs:
     resource_class: small
     steps:
       - attach_workspace:
-          at: ~/tw-entry-points
+          at: ~/tw-entrypoints
       - restore_cache:
-          key: tw-entry-points-gradle-{{ checksum "build.gradle" }}-{{ checksum "build.common.gradle" }}
+          key: tw-entrypoints-gradle-{{ checksum "build.gradle" }}-{{ checksum "build.common.gradle" }}
       - run:
           name: Set git config
           command: |
