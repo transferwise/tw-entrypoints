@@ -64,7 +64,9 @@ jobs:
             git config --global user.name "TransferWise CircleCI" && git config --global user.email circle@circle.tw.ee
       - run:
           name: Publish artifacts
-          command: ./gradlew publish pushTag --console=plain
+          command: if ./.circleci/submodule-changed.sh tw-entrypoints ; then
+            ./gradlew pushTag publish --no-daemon --console=plain
+            fi
 
 workflows:
   version: 2
