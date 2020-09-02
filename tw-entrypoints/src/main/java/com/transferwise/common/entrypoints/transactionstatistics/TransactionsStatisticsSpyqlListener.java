@@ -26,10 +26,16 @@ import lombok.extern.slf4j.Slf4j;
 public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListener {
 
   private static final long NANOS = 1_000_000L;
+  /**
+   * How long did the whole transaction take.
+   */
   public static final String METRIC_TRANSACTION_COMPLETION = "database.transaction.completion";
 
   public static final String METRIC_TRANSACTION_START = "database.transaction.start";
 
+  /**
+   * How long did only the commit/rollback operation take.
+   */
   public static final String METRIC_TRANSACTION_FINALIZATION = "database.transaction.finalization";
 
   private final MeterRegistry meterRegistry;
