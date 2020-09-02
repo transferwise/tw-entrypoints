@@ -61,13 +61,14 @@ public abstract class SpyqlInstrumentingDataSourceBeanProcessor implements BeanP
           throw new IllegalStateException("Can not determine database name for a Hikari data source.");
         }
 
+        log.info("Adding tw-spyql integration for '" + databaseName + "'.");
+
         if (dataSource.isWrapperFor(DataSourceImpl.class)) {
           DataSourceImpl gafferDataSource = dataSource.unwrap(DataSourceImpl.class);
           gafferDataSource.setDataSource(new SpyqlDataSource(gafferDataSource.getDataSource(), databaseName));
           return dataSource;
         }
 
-        log.info("Adding tw-spyql integration for '" + databaseName + "'.");
         return new SpyqlDataSource(dataSource, databaseName);
       }
 
