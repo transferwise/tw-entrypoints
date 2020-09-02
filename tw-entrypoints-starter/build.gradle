@@ -15,6 +15,7 @@ dependencies {
     implementation "com.transferwise.common:tw-spyql-core:${twSpyqlCoreVersion}"
     implementation 'io.micrometer:micrometer-core'
     implementation "com.transferwise.common:tw-context:${twContextVersion}"
+    implementation "com.zaxxer:HikariCP"
 
     runtimeOnly("com.transferwise.common:tw-context-starter:${twContextVersion}")
 

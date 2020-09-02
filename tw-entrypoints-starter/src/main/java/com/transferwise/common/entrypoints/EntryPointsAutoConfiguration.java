@@ -7,6 +7,7 @@ import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAcce
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -19,27 +20,35 @@ public class EntryPointsAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public DatabaseAccessStatisticsEntryPointInterceptor databaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
+  public DatabaseAccessStatisticsEntryPointInterceptor twEntryPointsDatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
     DatabaseAccessStatisticsEntryPointInterceptor interceptor = new DatabaseAccessStatisticsEntryPointInterceptor(meterRegistry);
     TwContext.addExecutionInterceptor(interceptor);
     return interceptor;
   }
 
   @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public DatabaseAccessStatisticsBeanPostProcessor databaseAccessStatisticsBeanPostProcessor() {
+  public DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
     return new DatabaseAccessStatisticsBeanPostProcessor();
   }
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public TableAccessStatisticsBeanPostProcessor tableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
   }
 
   @Bean
-  public ExecutionStatisticsEntryPointInterceptor executionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
+  @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean
+  public TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+    return new TransactionStatisticsBeanPostProcessor(beanFactory);
+  }
+
+  @Bean
+  public ExecutionStatisticsEntryPointInterceptor twEntryPointsExecutionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
     ExecutionStatisticsEntryPointInterceptor interceptor = new ExecutionStatisticsEntryPointInterceptor(meterRegistry);
     TwContext.addExecutionInterceptor(interceptor);
     return interceptor;

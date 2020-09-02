@@ -6,10 +6,10 @@ ext.artifactoryPassword = project.hasProperty("artifactoryPassword") ? project.a
 ext.projectGitHubRepoName = "tw-entrypoints"
 ext.projectScmUrl = "https://github.com/transferwise/${projectGitHubRepoName}"
 ext.projectScmConnection = "scm:git:git://github.com/transferwise/${projectGitHubRepoName}.git"
-ext.springBootVersion = "2.2.4.RELEASE"
-ext.twContextVersion = "0.2.0"
+ext.springBootVersion = "2.3.3.RELEASE"
+ext.twContextVersion = "0.6.0"
 ext.twBaseUtilsVersion = "1.2.8"
-ext.twSpyqlCoreVersion = "1.1.2"
+ext.twSpyqlCoreVersion = "1.2.0"
 
 buildscript {
     repositories {

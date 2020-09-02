@@ -5,16 +5,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
-import org.apache.commons.lang3.StringUtils;
 
 public class EntryPointsMetricUtils {
 
   public static final String TAG_DATABASE = "db";
   public static final String METRIC_PREFIX_ENTRYPOINTS = "EntryPoints.";
-
-  public static String normalizeNameForMetric(String name) {
-    return StringUtils.replaceChars(name, '.', '_');
-  }
 
   public static DistributionSummary summaryWithoutBuckets(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
     return DistributionSummary.builder(name).tags(tags)
