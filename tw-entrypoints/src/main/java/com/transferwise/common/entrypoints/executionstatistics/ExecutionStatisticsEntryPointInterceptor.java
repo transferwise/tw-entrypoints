@@ -32,10 +32,10 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
       return supplier.get();
     } finally {
       TwContext twContext = TwContext.current();
-      String name = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getName());
-      String group = EntryPointsMetricUtils.normalizeNameForMetric(twContext.getGroup());
 
-      Tags tags = Tags.of(TwContextMetricsTemplate.TAG_EP_NAME, name, TwContextMetricsTemplate.TAG_EP_GROUP, group);
+      Tags tags = Tags.of(TwContextMetricsTemplate.TAG_EP_NAME, twContext.getName(), TwContextMetricsTemplate.TAG_EP_GROUP, twContext.getGroup(),
+          TwContextMetricsTemplate.TAG_EP_OWNER, twContext.getOwner());
+
       EntryPointsMetricUtils
           .timerWithoutBuckets(meterRegistry, METRIC_PREFIX_ENTRYPOINTS + "Es.timeTaken", tags)
           .record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);

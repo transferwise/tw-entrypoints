@@ -127,7 +127,7 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
     }
 
     private void registerEmptyTransaction() {
-      if (transactionBeginEvent == null || transactionBeginEvent.isEmptyTransaction()) {
+      if (transactionBeginEvent == null || transactionBeginEvent.getTransaction().isEmpty()) {
         currentDas().registerEmptyTransaction();
       }
     }

@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints.test;
 
+import com.transferwise.common.baseutils.transactionsmanagement.TransactionsHelper;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -30,5 +31,10 @@ public class TestApplication {
 
     HikariDataSource hikariDataSource = new HikariDataSource(config);
     return new SpyqlDataSource(hikariDataSource, config.getPoolName());
+  }
+
+  @Bean
+  public TransactionsHelper transactionsHelper() {
+    return new TransactionsHelper();
   }
 }

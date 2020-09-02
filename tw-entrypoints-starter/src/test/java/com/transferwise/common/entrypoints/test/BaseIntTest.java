@@ -37,7 +37,8 @@ public class BaseIntTest {
     // Resetting counters from Flyway executions.
     TwContext.current().createSubContext().asEntryPoint("A", "B").execute(() -> {
     });
-    meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("EntryPoints") && !(m instanceof Gauge))
+    meterRegistry.getMeters().stream()
+        .filter(m -> (m.getId().getName().startsWith("EntryPoints") || m.getId().getName().startsWith("database")) && !(m instanceof Gauge))
         .forEach(m -> {
           log.info("Removing metric: " + m.getId());
           meterRegistry.remove(m);

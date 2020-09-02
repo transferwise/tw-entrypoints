@@ -1,65 +1,40 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
-import com.transferwise.common.baseutils.ExceptionUtils;
 import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.concurrency.ThreadNamingExecutorServiceWrapper;
+import com.transferwise.common.entrypoints.SpyqlInstrumentingDataSourceBeanProcessor;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.concurrent.ExecutorService;
-import javax.sql.DataSource;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 
-public class TableAccessStatisticsBeanPostProcessor implements BeanPostProcessor {
+public class TableAccessStatisticsBeanPostProcessor extends SpyqlInstrumentingDataSourceBeanProcessor {
 
-  @Value("${spring.application.name:generic-service}")
-  private String appName;
   @Value("${tw-entrypoints.tas.sql-parser.cache-size-mib:50}")
   private int sqlParserCacheSizeMib;
 
-  private final BeanFactory beanFactory;
+  private BeanFactory beanFactory;
 
   public TableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     this.beanFactory = beanFactory;
   }
 
   @Override
-  public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-    return bean;
-  }
+  protected void instrument(SpyqlDataSource spyqlDataSource, String databaseName) {
+    boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
+        (l) -> l instanceof TableAccessStatisticsSpyqlListener);
 
-  @Override
-  public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-    return ExceptionUtils.doUnchecked(() -> {
-      if (bean instanceof DataSource) {
-        DataSource dataSource = (DataSource) bean;
-        if (!dataSource.isWrapperFor(SpyqlDataSource.class)) {
-          return bean;
-        }
-        SpyqlDataSource spyqlDataSource = dataSource.unwrap(SpyqlDataSource.class);
-        boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
-            (l) -> l instanceof TableAccessStatisticsSpyqlListener);
+    if (isAlreadyAttached) {
+      return;
+    }
 
-        if (isAlreadyAttached) {
-          return bean;
-        }
-        String databaseName = spyqlDataSource.getDatabaseName();
-        if (databaseName == null) {
-          databaseName = appName.replaceAll("-service", "");
-        }
+    MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
+    ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
+        .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
 
-        MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
-        ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
-            .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
-
-        spyqlDataSource.addListener(
-            new TableAccessStatisticsSpyqlListener(meterRegistry, executorService,
-                databaseName, sqlParserCacheSizeMib));
-      }
-
-      return bean;
-    });
+    spyqlDataSource.addListener(
+        new TableAccessStatisticsSpyqlListener(meterRegistry, executorService,
+            databaseName, sqlParserCacheSizeMib));
   }
 }

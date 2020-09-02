@@ -10,7 +10,7 @@ import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetricUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import java.util.Arrays;
+import io.micrometer.core.instrument.Tags;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,12 +52,11 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
     dbDasMap.forEach((db, das) -> {
       String baseName = METRIC_PREFIX_ENTRYPOINTS + "Das.Registered.";
       Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, das.getDatabaseName());
-      String name = EntryPointsMetricUtils.normalizeNameForMetric(context.getName());
-      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, name);
-      String group = EntryPointsMetricUtils.normalizeNameForMetric(context.getGroup());
-      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, group);
+      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
+      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
+      Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
 
-      List<Tag> tags = Arrays.asList(dbTag, entryPointNameTag, entryPointGroupTag);
+      Tags tags = Tags.of(dbTag, entryPointNameTag, entryPointGroupTag, entryPointOwnerTag);
 
       long commitsCount = das.getCommitsCount();
       long rollbacksCount = das.getRollbacksCount();
@@ -80,7 +79,8 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
       if (log.isDebugEnabled()) {
         log.debug(
-            "Entry Point '" + name + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries=" + nonTransactionalQueriesCount
+            "Entry Point '" + context.getName() + "': commits=" + commitsCount + "; rollbacks=" + rollbacksCount + "; NT Queries="
+                + nonTransactionalQueriesCount
                 + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (timeTakenInDatabaseNs / 1000_000) + "; affectedRows="
                 + affectedRowsCount + "; fetchedRows=" + fetchedRowsCount);
       }

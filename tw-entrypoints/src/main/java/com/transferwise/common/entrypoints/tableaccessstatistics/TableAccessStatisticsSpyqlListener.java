@@ -15,7 +15,7 @@ import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import java.util.Arrays;
+import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -101,34 +101,28 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
     @Override
     public void onStatementExecuteFailure(StatementExecuteFailureEvent event) {
-      registerSql(event.getSql(), event.getTransactionId() != null, false);
+      registerSql(event.getSql(), event.getTransaction() != null, false);
     }
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded) {
       TwContext context = TwContext.current();
-      String epName = context.getName();
-      String epGroup = context.getGroup();
-
-      String name = EntryPointsMetricUtils.normalizeNameForMetric(epName);
-      String group = EntryPointsMetricUtils.normalizeNameForMetric(epGroup);
 
       SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql);
 
       sqlParseResult.operations.forEach((opName, op) -> {
         for (String tableName : op.getTableNames()) {
           Tag dbTag = Tag.of(EntryPointsMetricUtils.TAG_DATABASE, databaseName);
-          Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, name);
-          Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, group);
+          Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
+          Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
+          Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getOwner());
           Tag successTag = Tag.of("success", Boolean.toString(succeeded));
           Tag operationTag = Tag.of("operation", opName);
           Tag tableTag = Tag.of("table", tableName);
           Tag inTransactionTag = Tag.of("inTransaction", Boolean.toString(isInTransaction));
 
-          List<Tag> tags = Arrays
-              .asList(dbTag, entryPointNameTag, entryPointGroupTag, successTag, operationTag, tableTag,
-                  inTransactionTag);
-
-          meterRegistry.counter(METRIC_PREFIX_ENTRYPOINTS + "Tas.TableAccess", tags).increment();
+          meterRegistry.counter(METRIC_PREFIX_ENTRYPOINTS + "Tas.TableAccess", Tags
+              .of(dbTag, entryPointNameTag, entryPointGroupTag, successTag, operationTag, tableTag,
+                  inTransactionTag)).increment();
         }
       });
     }
