@@ -16,6 +16,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-core'
     implementation "com.transferwise.common:tw-context:${twContextVersion}"
     implementation "com.zaxxer:HikariCP"
+    implementation "com.transferwise.common:tw-gaffer-jta:1.3.2"
 
     runtimeOnly("com.transferwise.common:tw-context-starter:${twContextVersion}")
 

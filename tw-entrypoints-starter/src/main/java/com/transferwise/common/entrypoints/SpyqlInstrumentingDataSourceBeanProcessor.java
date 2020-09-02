@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
+import com.transferwise.common.gaffer.jdbc.DataSourceImpl;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
@@ -53,6 +54,7 @@ public abstract class SpyqlInstrumentingDataSourceBeanProcessor implements BeanP
       if (dataSource.isWrapperFor(SpyqlDataSource.class)) {
         return dataSource;
       }
+
       if (dataSource.isWrapperFor(HikariDataSource.class)) {
         String databaseName = dataSource.unwrap(HikariDataSource.class).getPoolName();
         if (StringUtils.isEmpty(databaseName)) {
@@ -60,6 +62,13 @@ public abstract class SpyqlInstrumentingDataSourceBeanProcessor implements BeanP
         }
 
         log.info("Adding tw-spyql integration for '" + databaseName + "'.");
+
+        if (dataSource.isWrapperFor(DataSourceImpl.class)) {
+          DataSourceImpl gafferDataSource = dataSource.unwrap(DataSourceImpl.class);
+          gafferDataSource.setDataSource(new SpyqlDataSource(gafferDataSource.getDataSource(), databaseName));
+          return dataSource;
+        }
+
         return new SpyqlDataSource(dataSource, databaseName);
       }
 
