@@ -24,8 +24,6 @@ public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
 
     MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
     TransactionsStatisticsSpyqlListener listener = new TransactionsStatisticsSpyqlListener(meterRegistry, databaseName);
-    listener.init();
-
     spyqlDataSource.addListener(listener);
   }
 }

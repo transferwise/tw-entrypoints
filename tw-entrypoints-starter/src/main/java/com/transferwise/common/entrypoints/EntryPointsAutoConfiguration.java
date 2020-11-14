@@ -19,7 +19,13 @@ import org.springframework.context.annotation.Configuration;
 public class EntryPointsAutoConfiguration {
 
   @Bean
+  public EntryPointsProperties twEntryPointsProperties() {
+    return new EntryPointsProperties();
+  }
+
+  @Bean
   @ConditionalOnMissingBean
+  @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
   public DatabaseAccessStatisticsEntryPointInterceptor twEntryPointsDatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
     DatabaseAccessStatisticsEntryPointInterceptor interceptor = new DatabaseAccessStatisticsEntryPointInterceptor(meterRegistry);
     TwContext.addExecutionInterceptor(interceptor);
@@ -48,6 +54,8 @@ public class EntryPointsAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.es.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean
   public ExecutionStatisticsEntryPointInterceptor twEntryPointsExecutionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
     ExecutionStatisticsEntryPointInterceptor interceptor = new ExecutionStatisticsEntryPointInterceptor(meterRegistry);
     TwContext.addExecutionInterceptor(interceptor);
