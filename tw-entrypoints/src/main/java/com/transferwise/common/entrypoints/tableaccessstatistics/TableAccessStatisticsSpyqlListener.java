@@ -1,6 +1,10 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetrics.METRIC_PREFIX_ENTRYPOINTS;
+import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_IN_TRANSACTION;
+import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_OPERATION;
+import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_SUCCESS;
+import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_TABLE;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -37,6 +41,9 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   public static final String METRIC_PREFIX_ENTRYPOINTS_TAS = METRIC_PREFIX_ENTRYPOINTS + "Tas.";
   public static final String METRIC_PREFIX_SQL_PARSER_RESULT_CACHE = METRIC_PREFIX_ENTRYPOINTS_TAS + "SqlParseResultsCache.";
+  public static final String METRIC_SQL_PARSER_RESULT_CACHE_HIT_COUNT = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitCount";
+  public static final String METRIC_SQL_PARSER_RESULT_CACHE_HIT_RATIO = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitRatio";
+  public static final String METRIC_SQL_PARSER_RESULT_CACHE_SIZE = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "size";
 
   public static final String METRIC_FAILED_PARSES = METRIC_PREFIX_ENTRYPOINTS_TAS + "FailedParses";
   public static final String METRIC_FIRST_TABLE_ACCESS = METRIC_PREFIX_ENTRYPOINTS_TAS + "FirstTableAccess";
@@ -44,8 +51,15 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   private static final long MIB = 1_000_000;
 
+  private static final Tag TAG_IN_TRANSACTION_TRUE = Tag.of(TAG_IN_TRANSACTION, "true");
+  private static final Tag TAG_IN_TRANSACTION_FALSE = Tag.of(TAG_IN_TRANSACTION, "false");
+
+  private static final Tag TAG_SUCCESS_TRUE = Tag.of(TAG_SUCCESS, "true");
+  private static final Tag TAG_SUCCESS_FALSE = Tag.of(TAG_SUCCESS, "false");
+
   private final MeterRegistry meterRegistry;
   private final String databaseName;
+
 
   final LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
@@ -59,9 +73,9 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         .weigher((String k, SqlParseResult v) -> k.length() * 2)
         .build(this::parseSql);
 
-    Gauge.builder(METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "size", () -> sqlParseResultsCache.estimatedSize()).register(meterRegistry);
-    Gauge.builder(METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitRatio", () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
-    Gauge.builder(METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitCount", () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
+    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).register(meterRegistry);
+    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
+    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_HIT_COUNT, () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
   }
 
   @Override
@@ -115,8 +129,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
       Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
       Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner());
-      Tag inTransactionTag = Tag.of("inTransaction", Boolean.toString(isInTransaction));
-      Tag successTag = Tag.of("success", Boolean.toString(succeeded));
+      Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
+      Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
       SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql);
 
@@ -126,19 +140,19 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       }
 
       sqlParseResult.operations.forEach((opName, op) -> {
-        Tag operationTag = Tag.of("operation", opName);
+        Tag operationTag = Tag.of(TAG_OPERATION, opName);
         String firstTableName = null;
         for (String tableName : op.getTableNames()) {
           if (firstTableName == null) {
             firstTableName = tableName;
           }
-          Tag tableTag = Tag.of("table", tableName);
+          Tag tableTag = Tag.of(TAG_TABLE, tableName);
 
           Tags tags = Tags.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
           meterRegistry.counter(METRIC_TABLE_ACCESS, tags).increment();
         }
         if (firstTableName != null) {
-          Tag tableTag = Tag.of("table", firstTableName);
+          Tag tableTag = Tag.of(TAG_TABLE, firstTableName);
           Tags tags = Tags.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
           meterRegistry.timer(METRIC_FIRST_TABLE_ACCESS, tags).record(executionTimeNs, TimeUnit.NANOSECONDS);
         }

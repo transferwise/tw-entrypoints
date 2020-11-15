@@ -1,14 +1,11 @@
 package com.transferwise.common.entrypoints.test;
 
 import java.time.Duration;
-import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.OutputFrame;
 
 @Slf4j
 public class DatabaseContainerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -18,14 +15,14 @@ public class DatabaseContainerInitializer implements ApplicationContextInitializ
     if (applicationContext.getEnvironment().getProperty("embedded.mysql.port") != null) {
       return;
     }
-    MariaDBContainer<? extends MariaDBContainer> mySqlContainer = startMariaDbTestContainer(applicationContext.getEnvironment());
+    MariaDBContainer<? extends MariaDBContainer> mySqlContainer = startMariaDbTestContainer();
     Integer mysqlPort = mySqlContainer.getMappedPort(3306);
     log.info("{} running on port {}", mySqlContainer.getDockerImageName(), mysqlPort);
     TestPropertySourceUtils
         .addInlinedPropertiesToEnvironment(applicationContext, "embedded.mysql.port=" + mysqlPort);
   }
 
-  private MariaDBContainer startMariaDbTestContainer(ConfigurableEnvironment configurableEnvironment) {
+  private MariaDBContainer<? extends MariaDBContainer> startMariaDbTestContainer() {
     MariaDBContainer<? extends MariaDBContainer> mySqlContainer = new MariaDBContainer<>()
         .withDatabaseName("mydb")
         .withPassword("q1w2e3r4");
@@ -45,7 +42,7 @@ public class DatabaseContainerInitializer implements ApplicationContextInitializ
         "--transaction-isolation=READ-COMMITTED"
     );
     mySqlContainer.withStartupTimeout(Duration.ofMinutes(2));
-    mySqlContainer.withLogConsumer((Consumer<OutputFrame>) outputFrame -> log.debug(outputFrame.getUtf8String()));
+    mySqlContainer.withLogConsumer(outputFrame -> log.debug(outputFrame.getUtf8String()));
     mySqlContainer.start();
 
     return mySqlContainer;

@@ -22,8 +22,28 @@ import lombok.extern.slf4j.Slf4j;
 public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextExecutionInterceptor {
 
   public static final String METRIC_PREFIX_DAS = METRIC_PREFIX_ENTRYPOINTS + "Das.";
+
   public static final String METRIC_PREFIX_DAS_REGISTERED = METRIC_PREFIX_DAS + "Registered.";
+  public static final String METRIC_REGISTERED_TIME_TAKEN = METRIC_PREFIX_DAS_REGISTERED + "TimeTaken";
+  public static final String METRIC_REGISTERED_FETCHED_ROWS = METRIC_PREFIX_DAS_REGISTERED + "FetchedRows";
+  public static final String METRIC_REGISTERED_AFFECTED_ROWS = METRIC_PREFIX_DAS_REGISTERED + "AffectedRows";
+  public static final String METRIC_REGISTERED_EMPTY_TRANSACTIONS = METRIC_PREFIX_DAS_REGISTERED + "EmptyTransactions";
+  public static final String METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS = METRIC_PREFIX_DAS_REGISTERED + "RemainingOpenConnections";
+  public static final String METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS = METRIC_PREFIX_DAS_REGISTERED + "MaxConcurrentConnections";
+  public static final String METRIC_REGISTERED_T_QUERIES = METRIC_PREFIX_DAS_REGISTERED + "TQueries";
+  public static final String METRIC_REGISTERED_NT_QUERIES = METRIC_PREFIX_DAS_REGISTERED + "NTQueries";
+  public static final String METRIC_REGISTERED_ROLLBACKS = METRIC_PREFIX_DAS_REGISTERED + "Rollbacks";
+  public static final String METRIC_REGISTERED_COMMITS = METRIC_PREFIX_DAS_REGISTERED + "Commits";
+
   public static final String METRIC_PREFIX_DAS_UNREGISTERED = METRIC_PREFIX_DAS + "Unknown.";
+  public static final String METRIC_UNREGISTERED_FETCHED_ROWS = METRIC_PREFIX_DAS_UNREGISTERED + "FetchedRows";
+  public static final String METRIC_UNREGISTERED_AFFECTED_ROWS = METRIC_PREFIX_DAS_UNREGISTERED + "AffectedRows";
+  public static final String METRIC_UNREGISTERED_EMPTY_TRANSACTIONS = METRIC_PREFIX_DAS_UNREGISTERED + "EmptyTransactions";
+  public static final String METRIC_UNREGISTERED_TIME_TAKEN_NS = METRIC_PREFIX_DAS_UNREGISTERED + "TimeTakenNs";
+  public static final String METRIC_UNREGISTERED_T_QUERIES = METRIC_PREFIX_DAS_UNREGISTERED + "TQueries";
+  public static final String METRIC_UNREGISTERED_NT_QUERIES = METRIC_PREFIX_DAS_UNREGISTERED + "NTQueries";
+  public static final String METRIC_UNREGISTERED_ROLLBACKS = METRIC_PREFIX_DAS_UNREGISTERED + "Rollbacks";
+  public static final String METRIC_UNREGISTERED_COMMITS = METRIC_PREFIX_DAS_UNREGISTERED + "Commits";
 
   private final MeterRegistry meterRegistry;
 
@@ -50,7 +70,6 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
     }
   }
 
-  @SuppressWarnings("checkstyle:MagicNumber")
   private void registerCall(TwContext context, Map<String, DatabaseAccessStatistics> dbDasMap) {
     dbDasMap.forEach((db, das) -> {
       Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, das.getDatabaseName());
@@ -68,16 +87,16 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       long timeTakenInDatabaseNs = das.getTimeTakenInDatabaseNs();
       long fetchedRowsCount = das.getFetchedRowsCount();
 
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "Commits", tags).record(commitsCount);
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "Rollbacks", tags).record(rollbacksCount);
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "NTQueries", tags).record(nonTransactionalQueriesCount);
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "TQueries", tags).record(transactionalQueriesCount);
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "MaxConcurrentConnections", tags).record(das.getMaxConnectionsCount());
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "RemainingOpenConnections", tags).record(das.getCurrentConnectionsCount());
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "EmptyTransactions", tags).record(das.getEmtpyTransactionsCount());
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "AffectedRows", tags).record(das.getAffectedRowsCount());
-      meterRegistry.summary(METRIC_PREFIX_DAS_REGISTERED + "FetchedRows", tags).record(fetchedRowsCount);
-      meterRegistry.timer(METRIC_PREFIX_DAS_REGISTERED + "TimeTaken", tags).record(timeTakenInDatabaseNs, TimeUnit.NANOSECONDS);
+      meterRegistry.summary(METRIC_REGISTERED_COMMITS, tags).record(commitsCount);
+      meterRegistry.summary(METRIC_REGISTERED_ROLLBACKS, tags).record(rollbacksCount);
+      meterRegistry.summary(METRIC_REGISTERED_NT_QUERIES, tags).record(nonTransactionalQueriesCount);
+      meterRegistry.summary(METRIC_REGISTERED_T_QUERIES, tags).record(transactionalQueriesCount);
+      meterRegistry.summary(METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tags).record(das.getMaxConnectionsCount());
+      meterRegistry.summary(METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS, tags).record(das.getCurrentConnectionsCount());
+      meterRegistry.summary(METRIC_REGISTERED_EMPTY_TRANSACTIONS, tags).record(das.getEmtpyTransactionsCount());
+      meterRegistry.summary(METRIC_REGISTERED_AFFECTED_ROWS, tags).record(das.getAffectedRowsCount());
+      meterRegistry.summary(METRIC_REGISTERED_FETCHED_ROWS, tags).record(fetchedRowsCount);
+      meterRegistry.timer(METRIC_REGISTERED_TIME_TAKEN, tags).record(timeTakenInDatabaseNs, TimeUnit.NANOSECONDS);
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -103,14 +122,14 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       long emptyTransactions = das.getAndResetEmptyTransactionsCount();
       long fetchedRows = das.getAndResetFetchedRowsCount();
 
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "Commits", tags).increment(commits);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "Rollbacks", tags).increment(rollbacks);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "NTQueries", tags).increment(nonTransactionalQueries);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "TQueries", tags).increment(transactionalQueries);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "TimeTakenNs", tags).increment(timeTakenNs);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "EmptyTransactions", tags).increment(emptyTransactions);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "AffectedRows", tags).increment(affectedRows);
-      meterRegistry.counter(METRIC_PREFIX_DAS_UNREGISTERED + "FetchedRows", tags).increment(fetchedRows);
+      meterRegistry.counter(METRIC_UNREGISTERED_COMMITS, tags).increment(commits);
+      meterRegistry.counter(METRIC_UNREGISTERED_ROLLBACKS, tags).increment(rollbacks);
+      meterRegistry.counter(METRIC_UNREGISTERED_NT_QUERIES, tags).increment(nonTransactionalQueries);
+      meterRegistry.counter(METRIC_UNREGISTERED_T_QUERIES, tags).increment(transactionalQueries);
+      meterRegistry.counter(METRIC_UNREGISTERED_TIME_TAKEN_NS, tags).increment(timeTakenNs);
+      meterRegistry.counter(METRIC_UNREGISTERED_EMPTY_TRANSACTIONS, tags).increment(emptyTransactions);
+      meterRegistry.counter(METRIC_UNREGISTERED_AFFECTED_ROWS, tags).increment(affectedRows);
+      meterRegistry.counter(METRIC_UNREGISTERED_FETCHED_ROWS, tags).increment(fetchedRows);
     });
   }
 

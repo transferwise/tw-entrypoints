@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecutionInterceptor {
 
   public static final String METRIC_PREFIX_ENTRYPOINTS_ES = METRIC_PREFIX_ENTRYPOINTS + "Es.";
+  public static final String METRIC_TIME_TAKEN = METRIC_PREFIX_ENTRYPOINTS_ES + "timeTaken";
 
   private final MeterRegistry meterRegistry;
 
@@ -38,7 +39,7 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
       Tags tags = Tags.of(TwContextMetricsTemplate.TAG_EP_GROUP, twContext.getGroup(), TwContextMetricsTemplate.TAG_EP_NAME, twContext.getName(),
           TwContextMetricsTemplate.TAG_EP_OWNER, twContext.getOwner());
 
-      meterRegistry.timer(METRIC_PREFIX_ENTRYPOINTS_ES + "timeTaken", tags)
+      meterRegistry.timer(METRIC_TIME_TAKEN, tags)
           .record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);
     }
   }

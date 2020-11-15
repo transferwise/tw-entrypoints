@@ -85,12 +85,11 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
     @Override
     public void onStatementExecute(StatementExecuteEvent event) {
-      if (strictMode) {
-        if (TwContext.current().get(NAME_KEY) == null) {
-          RuntimeException e = new RuntimeException("Statement executed outside of an entrypoint.");
-          log.error(e.getMessage(), e);
-        }
+      if (strictMode && TwContext.current().get(NAME_KEY) == null) {
+        RuntimeException e = new RuntimeException("Statement executed outside of an entrypoint.");
+        log.error(e.getMessage(), e);
       }
+
       if (currentDas().isLogSql()) {
         Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
         if (event.isInTransaction()) {
