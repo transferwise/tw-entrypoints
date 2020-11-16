@@ -5,12 +5,12 @@ ext.projectArtifactName = "tw-entrypoints"
 apply from: '../build.common.gradle'
 
 dependencies {
-    implementation 'com.google.code.findbugs:annotations:3.0.1'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.0.4'
     implementation 'io.micrometer:micrometer-core'
     implementation 'org.apache.commons:commons-lang3'
     implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
     implementation "com.transferwise.common:tw-spyql-core:${twSpyqlCoreVersion}"
-    implementation 'com.github.jsqlparser:jsqlparser:3.1'
+    implementation 'com.github.jsqlparser:jsqlparser:3.2'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation("org.slf4j:slf4j-api")
 

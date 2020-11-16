@@ -9,7 +9,9 @@ import com.transferwise.common.spyql.SpyqlDataSource;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Timer;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,17 +43,32 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
       }
     });
 
-    List<Meter> meters = getMeters();
+    List<Meter> meters = getTableAccessMeters();
 
     assertThat(meters.size()).isEqualTo(1);
-    assertThat(meters.get(0).getId().getTag("success")).isEqualTo("false");
-    assertThat(meters.get(0).getId().getTag("db")).isEqualTo("mydb");
-    assertThat(meters.get(0).getId().getTag("inTransaction")).isEqualTo("false");
-    assertThat(meters.get(0).getId().getTag("operation")).isEqualTo("select");
-    assertThat(meters.get(0).getId().getTag("table")).isEqualTo("not_existing_table");
-    assertThat(meters.get(0).getId().getTag("epName")).isEqualTo("myEntryPoint");
-    assertThat(meters.get(0).getId().getTag("epGroup")).isEqualTo("Test");
-    assertThat(((Counter) meters.get(0)).count()).isEqualTo(1);
+    var counter = (Counter) meters.get(0);
+    assertThat(counter.getId().getTag("success")).isEqualTo("false");
+    assertThat(counter.getId().getTag("db")).isEqualTo("mydb");
+    assertThat(counter.getId().getTag("inTransaction")).isEqualTo("false");
+    assertThat(counter.getId().getTag("operation")).isEqualTo("select");
+    assertThat(counter.getId().getTag("table")).isEqualTo("not_existing_table");
+    assertThat(counter.getId().getTag("epName")).isEqualTo("myEntryPoint");
+    assertThat(counter.getId().getTag("epGroup")).isEqualTo("Test");
+    assertThat(counter.count()).isEqualTo(1);
+
+    var firstTableAccessMeter = (Timer) getMeter("EntryPoints.Tas.FirstTableAccess");
+
+    assertThat(firstTableAccessMeter).isNotNull();
+    assertThat(firstTableAccessMeter.getId().getTag("success")).isEqualTo("false");
+    assertThat(firstTableAccessMeter.getId().getTag("db")).isEqualTo("mydb");
+    assertThat(firstTableAccessMeter.getId().getTag("inTransaction")).isEqualTo("false");
+    assertThat(firstTableAccessMeter.getId().getTag("operation")).isEqualTo("select");
+    assertThat(firstTableAccessMeter.getId().getTag("table")).isEqualTo("not_existing_table");
+    assertThat(firstTableAccessMeter.getId().getTag("epName")).isEqualTo("myEntryPoint");
+    assertThat(firstTableAccessMeter.getId().getTag("epGroup")).isEqualTo("Test");
+    assertThat(firstTableAccessMeter.getId().getTag("epOwner")).isEqualTo("Generic");
+    assertThat(firstTableAccessMeter.count()).isEqualTo(1);
+    assertThat(firstTableAccessMeter.mean(TimeUnit.NANOSECONDS)).isGreaterThan(0);
   }
 
   @Test
@@ -60,7 +77,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
       jdbcTemplate.update("update table_a set version=2");
     });
 
-    List<Meter> meters = getMeters();
+    List<Meter> meters = getTableAccessMeters();
     assertThat(meters.size()).isEqualTo(1);
     assertThat(meters.get(0).getId().getTag("success")).isEqualTo("true");
     assertThat(meters.get(0).getId().getTag("db")).isEqualTo("mydb");
@@ -69,6 +86,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(meters.get(0).getId().getTag("table")).isEqualTo("table_a");
     assertThat(meters.get(0).getId().getTag("epName")).isEqualTo("myEntryPoint");
     assertThat(meters.get(0).getId().getTag("epGroup")).isEqualTo("Test");
+    assertThat(meters.get(0).getId().getTag("epOwner")).isEqualTo("Generic");
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(1);
   }
 
@@ -76,7 +94,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
   public void updateSqlDoneOutsideOfEntrypointGetsAlsoRegistered() {
     jdbcTemplate.update("update table_a set version=2");
 
-    List<Meter> meters = getMeters();
+    List<Meter> meters = getTableAccessMeters();
 
     assertThat(meters.size()).isEqualTo(1);
     assertThat(meters.get(0).getId().getTag("success")).isEqualTo("true");
@@ -86,6 +104,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(meters.get(0).getId().getTag("table")).isEqualTo("table_a");
     assertThat(meters.get(0).getId().getTag("epName")).isEqualTo("Generic");
     assertThat(meters.get(0).getId().getTag("epGroup")).isEqualTo("Generic");
+    assertThat(meters.get(0).getId().getTag("epOwner")).isEqualTo("Generic");
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(1);
   }
 
@@ -95,7 +114,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     jdbcTemplate.update("update table_a set version=2");
     jdbcTemplate.update("update table_a set version=2");
 
-    List<Meter> meters = getMeters();
+    List<Meter> meters = getTableAccessMeters();
     assertThat(meters.size()).isEqualTo(1);
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(3);
 
@@ -107,7 +126,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
         .findFirst().orElse(null);
   }
 
-  private List<Meter> getMeters() {
+  private List<Meter> getTableAccessMeters() {
     return meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints.Tas.TableAccess"))
         .collect(Collectors.toList());
   }

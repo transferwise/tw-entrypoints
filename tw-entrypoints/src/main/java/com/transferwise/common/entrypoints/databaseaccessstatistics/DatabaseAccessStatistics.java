@@ -17,6 +17,7 @@ public class DatabaseAccessStatistics {
 
   public static final Map<String, DatabaseAccessStatistics> unknownContextDbDasMap = new ConcurrentHashMap<>();
 
+  @SuppressWarnings("unused")
   public static DatabaseAccessStatistics get(String databaseName) {
     return get(TwContext.current(), databaseName);
   }
@@ -43,7 +44,7 @@ public class DatabaseAccessStatistics {
   @Getter
   private long maxConnectionsCount = 0;
   @Getter
-  private String databaseName;
+  private final String databaseName;
   @Setter
   @Getter
   private boolean logSql;

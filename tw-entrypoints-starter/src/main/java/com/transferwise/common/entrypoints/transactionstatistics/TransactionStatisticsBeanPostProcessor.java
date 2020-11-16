@@ -7,7 +7,7 @@ import org.springframework.beans.factory.BeanFactory;
 
 public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDataSourceBeanProcessor {
 
-  private BeanFactory beanFactory;
+  private final BeanFactory beanFactory;
 
   public TransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     this.beanFactory = beanFactory;
@@ -16,7 +16,7 @@ public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
   @Override
   protected void instrument(SpyqlDataSource spyqlDataSource, String databaseName) {
     boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
-        (l) -> l instanceof TransactionsStatisticsSpyqlListener);
+        l -> l instanceof TransactionsStatisticsSpyqlListener);
 
     if (isAlreadyAttached) {
       return;
@@ -24,8 +24,6 @@ public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
 
     MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
     TransactionsStatisticsSpyqlListener listener = new TransactionsStatisticsSpyqlListener(meterRegistry, databaseName);
-    listener.init();
-
     spyqlDataSource.addListener(listener);
   }
 }

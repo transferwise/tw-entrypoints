@@ -14,7 +14,7 @@ public class TableAccessStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
   @Value("${tw-entrypoints.tas.sql-parser.cache-size-mib:50}")
   private int sqlParserCacheSizeMib;
 
-  private BeanFactory beanFactory;
+  private final BeanFactory beanFactory;
 
   public TableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     this.beanFactory = beanFactory;
@@ -23,7 +23,7 @@ public class TableAccessStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
   @Override
   protected void instrument(SpyqlDataSource spyqlDataSource, String databaseName) {
     boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
-        (l) -> l instanceof TableAccessStatisticsSpyqlListener);
+        l -> l instanceof TableAccessStatisticsSpyqlListener);
 
     if (isAlreadyAttached) {
       return;
