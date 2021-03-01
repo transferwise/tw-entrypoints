@@ -124,10 +124,10 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
     }
 
     private DatabaseAccessStatistics currentDas() {
-      return currentDas(TwContext.current(), databaseName);
+      return currentDas(TwContext.current());
     }
 
-    private DatabaseAccessStatistics currentDas(TwContext twContext, String databaseName) {
+    private DatabaseAccessStatistics currentDas(TwContext twContext) {
       return DatabaseAccessStatistics.get(twContext, databaseName);
     }
 
