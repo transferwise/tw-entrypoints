@@ -6,6 +6,9 @@ apply from: '../build.common.gradle'
 
 dependencies {
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.0.4'
+
+    implementation 'com.transferwise.common:tw-base-utils:1.4.0'
+    implementation 'com.google.guava:guava:30.1-jre'
     implementation 'io.micrometer:micrometer-core'
     implementation 'org.apache.commons:commons-lang3'
     implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"

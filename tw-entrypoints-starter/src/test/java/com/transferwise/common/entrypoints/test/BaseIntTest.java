@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints.test;
 
+import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.context.TwContext;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -24,6 +25,8 @@ public class BaseIntTest {
   @Autowired
   protected MeterRegistry meterRegistry;
   @Autowired
+  protected IMeterCache meterCache;
+  @Autowired
   private JdbcTemplate jdbcTemplate;
 
   @BeforeAll
@@ -43,5 +46,6 @@ public class BaseIntTest {
           log.info("Removing metric: " + m.getId());
           meterRegistry.remove(m);
         });
+    meterCache.clear();
   }
 }

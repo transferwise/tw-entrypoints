@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints.transactionstatistics;
 
+import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.entrypoints.SpyqlInstrumentingDataSourceBeanProcessor;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -23,7 +24,8 @@ public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
     }
 
     MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
-    TransactionsStatisticsSpyqlListener listener = new TransactionsStatisticsSpyqlListener(meterRegistry, databaseName);
+    IMeterCache meterCache = beanFactory.getBean(IMeterCache.class);
+    TransactionsStatisticsSpyqlListener listener = new TransactionsStatisticsSpyqlListener(meterRegistry, meterCache, databaseName);
     spyqlDataSource.addListener(listener);
   }
 }

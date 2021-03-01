@@ -8,9 +8,12 @@ import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_TABLE;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.transferwise.common.baseutils.meters.cache.IMeterCache;
+import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsSpyqlListener.SqlParseResult.SqlOperation;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
@@ -19,11 +22,11 @@ import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -59,13 +62,18 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   private final MeterRegistry meterRegistry;
   private final String databaseName;
+  private final Tag dbTag;
 
+  private final IMeterCache meterCache;
 
   final LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
-  public TableAccessStatisticsSpyqlListener(MeterRegistry meterRegistry, Executor executor, String databaseName, long sqlParserCacheSizeMib) {
+  public TableAccessStatisticsSpyqlListener(MeterRegistry meterRegistry, IMeterCache meterCache, Executor executor, String databaseName,
+      long sqlParserCacheSizeMib) {
     this.databaseName = databaseName;
+    this.dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
     this.meterRegistry = meterRegistry;
+    this.meterCache = meterCache;
     meterRegistry.config().meterFilter(new TasMeterFilter());
 
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(sqlParserCacheSizeMib * MIB).recordStats()
@@ -88,7 +96,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     try {
       Statements stmts = CCJSqlParserUtil.parseStatements(sql);
       for (Statement stmt : stmts.getStatements()) {
-        String opName = getOperationName(stmt);
+        // Intern() makes later equal checks much faster.
+        String opName = getOperationName(stmt).intern();
         CustomTablesNamesFinder tablesNamesFinder = new CustomTablesNamesFinder();
         List<String> tableNames = tablesNamesFinder.getTableList(stmt);
 
@@ -96,7 +105,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
             .getOperations()
             .computeIfAbsent(opName, k -> new SqlParseResult.SqlOperation());
         for (String tableName : tableNames) {
-          sqlOp.getTableNames().add(tableName);
+          // Intern() makes later equal checks much faster.
+          sqlOp.getTableNames().add(tableName.intern());
         }
       }
     } catch (Throwable t) {
@@ -125,7 +135,6 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded, long executionTimeNs) {
       TwContext context = TwContext.current();
-      Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
       Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
       Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
       Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner());
@@ -139,24 +148,23 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         return;
       }
 
-      sqlParseResult.operations.forEach((opName, op) -> {
+      for (Entry<String, SqlOperation> entry : sqlParseResult.operations.entrySet()) {
+        String opName = entry.getKey();
+        SqlOperation op = entry.getValue();
         Tag operationTag = Tag.of(TAG_OPERATION, opName);
         String firstTableName = null;
         for (String tableName : op.getTableNames()) {
+          Tag tableTag = Tag.of(TAG_TABLE, tableName);
+          TagsSet tagsSet = TagsSet.of(
+              dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
+
           if (firstTableName == null) {
             firstTableName = tableName;
+            meterCache.timer(METRIC_FIRST_TABLE_ACCESS, tagsSet).record(executionTimeNs, TimeUnit.NANOSECONDS);
           }
-          Tag tableTag = Tag.of(TAG_TABLE, tableName);
-
-          Tags tags = Tags.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
-          meterRegistry.counter(METRIC_TABLE_ACCESS, tags).increment();
+          meterCache.counter(METRIC_TABLE_ACCESS, tagsSet).increment();
         }
-        if (firstTableName != null) {
-          Tag tableTag = Tag.of(TAG_TABLE, firstTableName);
-          Tags tags = Tags.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
-          meterRegistry.timer(METRIC_FIRST_TABLE_ACCESS, tags).record(executionTimeNs, TimeUnit.NANOSECONDS);
-        }
-      });
+      }
     }
   }
 
