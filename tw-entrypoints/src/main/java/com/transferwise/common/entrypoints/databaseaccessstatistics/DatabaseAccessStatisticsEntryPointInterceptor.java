@@ -10,7 +10,6 @@ import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.util.HashMap;
@@ -49,9 +48,9 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
   private final IMeterCache meterCache;
 
-  public DatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry, IMeterCache meterCache) {
+  public DatabaseAccessStatisticsEntryPointInterceptor(IMeterCache meterCache) {
     this.meterCache = meterCache;
-    meterRegistry.config().meterFilter(new DasMeterFilter());
+    meterCache.getMeterRegistry().config().meterFilter(new DasMeterFilter());
   }
 
   @Override

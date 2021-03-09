@@ -19,7 +19,6 @@ import com.transferwise.common.spyql.event.TransactionRollbackEvent;
 import com.transferwise.common.spyql.event.TransactionRollbackFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.sql.Connection;
@@ -64,10 +63,10 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
   private final IMeterCache meterCache;
   private final Tag dbTag;
 
-  public TransactionsStatisticsSpyqlListener(MeterRegistry meterRegistry, IMeterCache meterCache, String databaseName) {
+  public TransactionsStatisticsSpyqlListener(IMeterCache meterCache, String databaseName) {
     this.dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
     this.meterCache = meterCache;
-    meterRegistry.config().meterFilter(new TsMeterFilter());
+    meterCache.getMeterRegistry().config().meterFilter(new TsMeterFilter());
   }
 
   @Override

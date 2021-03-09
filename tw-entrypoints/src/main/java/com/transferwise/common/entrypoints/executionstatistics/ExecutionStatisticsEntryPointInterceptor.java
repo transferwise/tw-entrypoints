@@ -8,7 +8,6 @@ import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextExecutionInterceptor;
 import com.transferwise.common.context.TwContextMetricsTemplate;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -19,9 +18,9 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
 
   private final IMeterCache meterCache;
 
-  public ExecutionStatisticsEntryPointInterceptor(MeterRegistry meterRegistry, IMeterCache meterCache) {
+  public ExecutionStatisticsEntryPointInterceptor(IMeterCache meterCache) {
     this.meterCache = meterCache;
-    meterRegistry.config().meterFilter(new EsMeterFilter());
+    meterCache.getMeterRegistry().config().meterFilter(new EsMeterFilter());
   }
 
   @Override

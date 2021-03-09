@@ -60,7 +60,6 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   private static final Tag TAG_SUCCESS_TRUE = Tag.of(TAG_SUCCESS, "true");
   private static final Tag TAG_SUCCESS_FALSE = Tag.of(TAG_SUCCESS, "false");
 
-  private final MeterRegistry meterRegistry;
   private final String databaseName;
   private final Tag dbTag;
 
@@ -68,12 +67,12 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   final LoadingCache<String, SqlParseResult> sqlParseResultsCache;
 
-  public TableAccessStatisticsSpyqlListener(MeterRegistry meterRegistry, IMeterCache meterCache, Executor executor, String databaseName,
+  public TableAccessStatisticsSpyqlListener(IMeterCache meterCache, Executor executor, String databaseName,
       long sqlParserCacheSizeMib) {
     this.databaseName = databaseName;
     this.dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
-    this.meterRegistry = meterRegistry;
     this.meterCache = meterCache;
+    MeterRegistry meterRegistry = meterCache.getMeterRegistry();
     meterRegistry.config().meterFilter(new TasMeterFilter());
 
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(sqlParserCacheSizeMib * MIB).recordStats()
@@ -110,7 +109,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         }
       }
     } catch (Throwable t) {
-      meterRegistry.counter(METRIC_FAILED_PARSES, EntryPointsMetrics.TAG_DATABASE, databaseName).increment();
+      meterCache.counter(METRIC_FAILED_PARSES, TagsSet.of(EntryPointsMetrics.TAG_DATABASE, databaseName)).increment();
       log.debug(t.getMessage(), t);
     }
     return result;
