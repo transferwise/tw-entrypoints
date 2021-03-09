@@ -65,7 +65,7 @@ jobs:
       - run:
           name: Publish artifacts
           command: |
-            if ./.circleci/submodule-changed.sh tw-entrypoints ; then
+            if ./.circleci/version-changed.sh tw-entrypoints ; then
               ./gradlew pushTag publish --no-daemon --console=plain
             fi
 
