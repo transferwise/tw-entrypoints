@@ -1,7 +1,11 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
+import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
+import io.micrometer.core.instrument.Tag;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,6 +49,8 @@ public class DatabaseAccessStatistics {
   private long maxConnectionsCount = 0;
   @Getter
   private final String databaseName;
+  @Getter
+  private final TagsSet tagsSet;
   @Setter
   @Getter
   private boolean logSql;
@@ -54,6 +60,8 @@ public class DatabaseAccessStatistics {
 
   public DatabaseAccessStatistics(String databaseName) {
     this.databaseName = databaseName;
+    Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
+    this.tagsSet = TagsSet.of(Collections.singletonList(dbTag));
   }
 
   public void registerCommit(long timeTakenNs) {

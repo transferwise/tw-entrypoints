@@ -2,17 +2,18 @@ package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import static com.transferwise.common.entrypoints.EntryPointsMetrics.METRIC_PREFIX_ENTRYPOINTS;
 
+import com.transferwise.common.baseutils.meters.cache.IMeterCache;
+import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextExecutionInterceptor;
 import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import java.util.Collections;
-import java.util.List;
+import io.micrometer.core.instrument.Timer;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
@@ -45,16 +46,16 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
   public static final String METRIC_UNREGISTERED_ROLLBACKS = METRIC_PREFIX_DAS_UNREGISTERED + "Rollbacks";
   public static final String METRIC_UNREGISTERED_COMMITS = METRIC_PREFIX_DAS_UNREGISTERED + "Commits";
 
-  private final MeterRegistry meterRegistry;
+  private final IMeterCache meterCache;
 
-  public DatabaseAccessStatisticsEntryPointInterceptor(MeterRegistry meterRegistry) {
-    this.meterRegistry = meterRegistry;
-    meterRegistry.config().meterFilter(new DasMeterFilter());
+  public DatabaseAccessStatisticsEntryPointInterceptor(IMeterCache meterCache) {
+    this.meterCache = meterCache;
+    meterCache.getMeterRegistry().config().meterFilter(new DasMeterFilter());
   }
 
   @Override
   public <T> T intercept(TwContext context, Supplier<T> supplier) {
-    Map<String, DatabaseAccessStatistics> dbDasMap = new ConcurrentHashMap<>();
+    Map<String, DatabaseAccessStatistics> dbDasMap = new HashMap<>();
     try {
       context.put(DatabaseAccessStatistics.TW_CONTEXT_KEY, dbDasMap);
 
@@ -70,33 +71,49 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
     }
   }
 
+
   private void registerCall(TwContext context, Map<String, DatabaseAccessStatistics> dbDasMap) {
-    dbDasMap.forEach((db, das) -> {
+    for (DatabaseAccessStatistics das : dbDasMap.values()) {
       Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, das.getDatabaseName());
       Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
       Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
       Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getOwner());
 
-      Tags tags = Tags.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag);
+      TagsSet tagsSet = TagsSet.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag);
 
-      long commitsCount = das.getCommitsCount();
-      long rollbacksCount = das.getRollbacksCount();
-      long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
-      long transactionalQueriesCount = das.getTransactionalQueriesCount();
-      long affectedRowsCount = das.getAffectedRowsCount();
-      long timeTakenInDatabaseNs = das.getTimeTakenInDatabaseNs();
-      long fetchedRowsCount = das.getFetchedRowsCount();
+      final long commitsCount = das.getCommitsCount();
+      final long rollbacksCount = das.getRollbacksCount();
+      final long nonTransactionalQueriesCount = das.getNonTransactionalQueriesCount();
+      final long transactionalQueriesCount = das.getTransactionalQueriesCount();
+      final long affectedRowsCount = das.getAffectedRowsCount();
+      final long timeTakenInDatabaseNs = das.getTimeTakenInDatabaseNs();
+      final long fetchedRowsCount = das.getFetchedRowsCount();
 
-      meterRegistry.summary(METRIC_REGISTERED_COMMITS, tags).record(commitsCount);
-      meterRegistry.summary(METRIC_REGISTERED_ROLLBACKS, tags).record(rollbacksCount);
-      meterRegistry.summary(METRIC_REGISTERED_NT_QUERIES, tags).record(nonTransactionalQueriesCount);
-      meterRegistry.summary(METRIC_REGISTERED_T_QUERIES, tags).record(transactionalQueriesCount);
-      meterRegistry.summary(METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tags).record(das.getMaxConnectionsCount());
-      meterRegistry.summary(METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS, tags).record(das.getCurrentConnectionsCount());
-      meterRegistry.summary(METRIC_REGISTERED_EMPTY_TRANSACTIONS, tags).record(das.getEmtpyTransactionsCount());
-      meterRegistry.summary(METRIC_REGISTERED_AFFECTED_ROWS, tags).record(das.getAffectedRowsCount());
-      meterRegistry.summary(METRIC_REGISTERED_FETCHED_ROWS, tags).record(fetchedRowsCount);
-      meterRegistry.timer(METRIC_REGISTERED_TIME_TAKEN, tags).record(timeTakenInDatabaseNs, TimeUnit.NANOSECONDS);
+      CallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "callMetrics", tagsSet, () -> {
+        CallMeters result = new CallMeters();
+        result.commits = meterCache.summary(METRIC_REGISTERED_COMMITS, tagsSet);
+        result.rollbacks = meterCache.summary(METRIC_REGISTERED_ROLLBACKS, tagsSet);
+        result.nonTransactionalQueries = meterCache.summary(METRIC_REGISTERED_NT_QUERIES, tagsSet);
+        result.transactionalQueries = meterCache.summary(METRIC_REGISTERED_T_QUERIES, tagsSet);
+        result.maxConcurrentConnections = meterCache.summary(METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tagsSet);
+        result.remainingOpenConnections = meterCache.summary(METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS, tagsSet);
+        result.emptyTransactions = meterCache.summary(METRIC_REGISTERED_EMPTY_TRANSACTIONS, tagsSet);
+        result.affectedRows = meterCache.summary(METRIC_REGISTERED_AFFECTED_ROWS, tagsSet);
+        result.fetchedRows = meterCache.summary(METRIC_REGISTERED_FETCHED_ROWS, tagsSet);
+        result.timeTakenNs = meterCache.timer(METRIC_REGISTERED_TIME_TAKEN, tagsSet);
+        return result;
+      });
+
+      meters.commits.record(commitsCount);
+      meters.rollbacks.record(rollbacksCount);
+      meters.nonTransactionalQueries.record(nonTransactionalQueriesCount);
+      meters.transactionalQueries.record(transactionalQueriesCount);
+      meters.maxConcurrentConnections.record(das.getMaxConnectionsCount());
+      meters.remainingOpenConnections.record(das.getCurrentConnectionsCount());
+      meters.emptyTransactions.record(das.getEmtpyTransactionsCount());
+      meters.affectedRows.record(das.getAffectedRowsCount());
+      meters.fetchedRows.record(fetchedRowsCount);
+      meters.timeTakenNs.record(timeTakenInDatabaseNs, TimeUnit.NANOSECONDS);
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -105,32 +122,69 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
                 + "; T Queries=" + transactionalQueriesCount + "; TimeTakenMs=" + (timeTakenInDatabaseNs / 1000_000) + "; affectedRows="
                 + affectedRowsCount + "; fetchedRows=" + fetchedRowsCount);
       }
-    });
+    }
+  }
+
+  private static class CallMeters {
+
+    private DistributionSummary commits;
+    private DistributionSummary rollbacks;
+    private DistributionSummary nonTransactionalQueries;
+    private DistributionSummary transactionalQueries;
+    private DistributionSummary maxConcurrentConnections;
+    private DistributionSummary remainingOpenConnections;
+    private DistributionSummary emptyTransactions;
+    private DistributionSummary affectedRows;
+    private DistributionSummary fetchedRows;
+    private Timer timeTakenNs;
   }
 
   private void registerUnknownCalls() {
-    DatabaseAccessStatistics.unknownContextDbDasMap.forEach((db, das) -> {
-      Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, das.getDatabaseName());
-      List<Tag> tags = Collections.singletonList(dbTag);
+    for (DatabaseAccessStatistics das : DatabaseAccessStatistics.unknownContextDbDasMap.values()) {
+      final long commits = das.getAndResetCommitsCount();
+      final long rollbacks = das.getAndResetRollbacksCount();
+      final long nonTransactionalQueries = das.getAndResetNonTransactionalQueriesCount();
+      final long transactionalQueries = das.getAndResetTransactionalQueriesCount();
+      final long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
+      final long affectedRows = das.getAndResetAffectedRowsCount();
+      final long emptyTransactions = das.getAndResetEmptyTransactionsCount();
+      final long fetchedRows = das.getAndResetFetchedRowsCount();
 
-      long commits = das.getAndResetCommitsCount();
-      long rollbacks = das.getAndResetRollbacksCount();
-      long nonTransactionalQueries = das.getAndResetNonTransactionalQueriesCount();
-      long transactionalQueries = das.getAndResetTransactionalQueriesCount();
-      long timeTakenNs = das.getAndResetTimeTakenInDatabaseNs();
-      long affectedRows = das.getAndResetAffectedRowsCount();
-      long emptyTransactions = das.getAndResetEmptyTransactionsCount();
-      long fetchedRows = das.getAndResetFetchedRowsCount();
+      TagsSet tagsSet = das.getTagsSet();
+      UnknownCallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "unknownCallMetrics", tagsSet, () -> {
+        UnknownCallMeters result = new UnknownCallMeters();
+        result.commits = meterCache.counter(METRIC_UNREGISTERED_COMMITS, tagsSet);
+        result.rollbacks = meterCache.counter(METRIC_UNREGISTERED_ROLLBACKS, tagsSet);
+        result.nonTransactionalQueries = meterCache.counter(METRIC_UNREGISTERED_NT_QUERIES, tagsSet);
+        result.transactionalQueries = meterCache.counter(METRIC_UNREGISTERED_T_QUERIES, tagsSet);
+        result.timeTakenNs = meterCache.counter(METRIC_UNREGISTERED_TIME_TAKEN_NS, tagsSet);
+        result.emptyTransactions = meterCache.counter(METRIC_UNREGISTERED_EMPTY_TRANSACTIONS, tagsSet);
+        result.affectedRows = meterCache.counter(METRIC_UNREGISTERED_AFFECTED_ROWS, tagsSet);
+        result.fetchedRows = meterCache.counter(METRIC_UNREGISTERED_FETCHED_ROWS, tagsSet);
+        return result;
+      });
 
-      meterRegistry.counter(METRIC_UNREGISTERED_COMMITS, tags).increment(commits);
-      meterRegistry.counter(METRIC_UNREGISTERED_ROLLBACKS, tags).increment(rollbacks);
-      meterRegistry.counter(METRIC_UNREGISTERED_NT_QUERIES, tags).increment(nonTransactionalQueries);
-      meterRegistry.counter(METRIC_UNREGISTERED_T_QUERIES, tags).increment(transactionalQueries);
-      meterRegistry.counter(METRIC_UNREGISTERED_TIME_TAKEN_NS, tags).increment(timeTakenNs);
-      meterRegistry.counter(METRIC_UNREGISTERED_EMPTY_TRANSACTIONS, tags).increment(emptyTransactions);
-      meterRegistry.counter(METRIC_UNREGISTERED_AFFECTED_ROWS, tags).increment(affectedRows);
-      meterRegistry.counter(METRIC_UNREGISTERED_FETCHED_ROWS, tags).increment(fetchedRows);
-    });
+      meters.commits.increment(commits);
+      meters.rollbacks.increment(rollbacks);
+      meters.nonTransactionalQueries.increment(nonTransactionalQueries);
+      meters.transactionalQueries.increment(transactionalQueries);
+      meters.timeTakenNs.increment(timeTakenNs);
+      meters.emptyTransactions.increment(emptyTransactions);
+      meters.affectedRows.increment(affectedRows);
+      meters.fetchedRows.increment(fetchedRows);
+    }
+  }
+
+  private static class UnknownCallMeters {
+
+    private Counter commits;
+    private Counter rollbacks;
+    private Counter nonTransactionalQueries;
+    private Counter transactionalQueries;
+    private Counter timeTakenNs;
+    private Counter emptyTransactions;
+    private Counter affectedRows;
+    private Counter fetchedRows;
   }
 
   @Override

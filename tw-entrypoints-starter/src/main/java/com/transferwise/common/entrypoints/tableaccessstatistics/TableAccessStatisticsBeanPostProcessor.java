@@ -2,9 +2,9 @@ package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.concurrency.ThreadNamingExecutorServiceWrapper;
+import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.entrypoints.SpyqlInstrumentingDataSourceBeanProcessor;
 import com.transferwise.common.spyql.SpyqlDataSource;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,12 +29,11 @@ public class TableAccessStatisticsBeanPostProcessor extends SpyqlInstrumentingDa
       return;
     }
 
-    MeterRegistry meterRegistry = beanFactory.getBean(MeterRegistry.class);
+    IMeterCache meterCache = beanFactory.getBean(IMeterCache.class);
     ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
         .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
 
     spyqlDataSource.addListener(
-        new TableAccessStatisticsSpyqlListener(meterRegistry, executorService,
-            databaseName, sqlParserCacheSizeMib));
+        new TableAccessStatisticsSpyqlListener(meterCache, executorService, databaseName, sqlParserCacheSizeMib));
   }
 }

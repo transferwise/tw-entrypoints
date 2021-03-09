@@ -85,20 +85,22 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
 
     @Override
     public void onStatementExecute(StatementExecuteEvent event) {
-      if (strictMode && TwContext.current().get(NAME_KEY) == null) {
+      TwContext twContext = TwContext.current();
+      if (strictMode && twContext.get(NAME_KEY) == null) {
         RuntimeException e = new RuntimeException("Statement executed outside of an entrypoint.");
         log.error(e.getMessage(), e);
       }
 
-      if (currentDas().isLogSql()) {
-        Throwable t = currentDas().isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
+      DatabaseAccessStatistics das = currentDas();
+      if (das.isLogSql()) {
+        Throwable t = das.isLogSqlStacktrace() ? new RuntimeException("SQL stack") : null;
         if (event.isInTransaction()) {
           log.info("TQ: " + event.getSql(), t);
         } else {
           log.info("NTQ:" + event.getSql(), t);
         }
       }
-      currentDas().registerQuery(event);
+      das.registerQuery(event);
     }
 
     @Override
@@ -122,7 +124,11 @@ public class DatabaseAccessStatisticsSpyqlListener implements SpyqlDataSourceLis
     }
 
     private DatabaseAccessStatistics currentDas() {
-      return DatabaseAccessStatistics.get(TwContext.current(), databaseName);
+      return currentDas(TwContext.current());
+    }
+
+    private DatabaseAccessStatistics currentDas(TwContext twContext) {
+      return DatabaseAccessStatistics.get(twContext, databaseName);
     }
 
     private void registerEmptyTransaction() {

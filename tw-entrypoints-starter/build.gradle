@@ -9,6 +9,7 @@ dependencies {
 
     implementation(project(":tw-entrypoints"))
 
+    implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
     implementation('org.springframework.boot:spring-boot-autoconfigure')
     implementation('org.springframework:spring-context')
     implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
@@ -25,7 +26,7 @@ dependencies {
     testImplementation 'com.zaxxer:HikariCP'
     testImplementation 'org.mariadb.jdbc:mariadb-java-client'
     testImplementation 'io.micrometer:micrometer-registry-prometheus'
-    testImplementation 'org.testcontainers:mariadb:1.12.5'
+    testImplementation 'org.testcontainers:mariadb:1.15.2'
     testImplementation("org.slf4j:slf4j-api")
     testImplementation 'org.apache.commons:commons-lang3'
     testImplementation 'com.github.ben-manes.caffeine:caffeine'
