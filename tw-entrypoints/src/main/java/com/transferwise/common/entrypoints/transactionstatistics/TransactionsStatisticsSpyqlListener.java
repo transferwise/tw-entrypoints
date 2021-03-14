@@ -10,6 +10,7 @@ import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
+import com.transferwise.common.spyql.SpyqlTransactionDefinition;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.SpyqlTransaction;
 import com.transferwise.common.spyql.event.TransactionBeginEvent;
@@ -79,15 +80,19 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
     @Override
     public void onTransactionBegin(TransactionBeginEvent event) {
       SpyqlTransaction transaction = event.getTransaction();
+      SpyqlTransactionDefinition transactionDefinition = transaction.getDefinition();
 
-      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, nullToUnknown(transaction.getDefinition().getEntryPointName()));
-      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, nullToUnknown(transaction.getDefinition().getEntryPointGroup()));
-      Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_OWNER, nullToUnknown(transaction.getDefinition().getEntryPointOwner()));
-      Tag nameTag = Tag.of(TAG_TRANSACTION_NAME, nullToUnknown(transaction.getDefinition().getName()));
-      Tag readOnlyTag = Boolean.TRUE.equals(transaction.getDefinition().getReadOnly()) ? TAG_READ_ONLY_TRUE : TAG_READ_ONLY_FALSE;
-      Tag isolationLevelTag = isolationLevelTag(transaction.getDefinition().getIsolationLevel());
+      Tag readOnlyTag = Boolean.TRUE.equals(transactionDefinition.getReadOnly()) ? TAG_READ_ONLY_TRUE : TAG_READ_ONLY_FALSE;
+      Tag isolationLevelTag = isolationLevelTag(transactionDefinition.getIsolationLevel());
 
-      TagsSet tagsSet = TagsSet.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, isolationLevelTag, nameTag, readOnlyTag);
+      TagsSet tagsSet = TagsSet.of(
+          dbTag.getKey(), dbTag.getValue(),
+          TwContextMetricsTemplate.TAG_EP_GROUP, nullToUnknown(transactionDefinition.getEntryPointGroup()),
+          TwContextMetricsTemplate.TAG_EP_NAME, nullToUnknown(transactionDefinition.getEntryPointName()),
+          TwContextMetricsTemplate.TAG_EP_OWNER, nullToUnknown(transactionDefinition.getEntryPointOwner()),
+          isolationLevelTag.getKey(), isolationLevelTag.getValue(),
+          TAG_TRANSACTION_NAME, nullToUnknown(transactionDefinition.getName()),
+          readOnlyTag.getKey(), readOnlyTag.getValue());
       meterCache.counter(METRIC_TRANSACTION_START, tagsSet).increment();
     }
 
@@ -112,17 +117,23 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
     }
 
     protected void registerTransactionEnd(SpyqlTransaction transaction, boolean success, boolean commit, long finalizationTimeNs) {
-      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, nullToUnknown(transaction.getDefinition().getEntryPointName()));
-      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, nullToUnknown(transaction.getDefinition().getEntryPointGroup()));
-      Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_OWNER, nullToUnknown(transaction.getDefinition().getEntryPointOwner()));
-      Tag nameTag = Tag.of(TAG_TRANSACTION_NAME, nullToUnknown(transaction.getDefinition().getName()));
-      Tag isolationLevelTag = isolationLevelTag(transaction.getDefinition().getIsolationLevel());
-      Tag readOnlyTag = Boolean.TRUE.equals(transaction.getDefinition().getReadOnly()) ? TAG_READ_ONLY_TRUE : TAG_READ_ONLY_FALSE;
-      Tag failureTag = success ? TAG_RESOLUTION_SUCCESS_TRUE : TAG_RESOLUTION_SUCCESS_FALSE;
-      Tag operationTag = commit ? TAG_RESOLUTION_COMMIT : TAG_RESOLUTION_ROLLBACK;
+      SpyqlTransactionDefinition transactionDefinition = transaction.getDefinition();
 
-      TagsSet tagsSet = TagsSet
-          .of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, failureTag, isolationLevelTag, nameTag, operationTag, readOnlyTag);
+      final Tag isolationLevelTag = isolationLevelTag(transactionDefinition.getIsolationLevel());
+      final Tag readOnlyTag = Boolean.TRUE.equals(transactionDefinition.getReadOnly()) ? TAG_READ_ONLY_TRUE : TAG_READ_ONLY_FALSE;
+      final Tag failureTag = success ? TAG_RESOLUTION_SUCCESS_TRUE : TAG_RESOLUTION_SUCCESS_FALSE;
+      final Tag operationTag = commit ? TAG_RESOLUTION_COMMIT : TAG_RESOLUTION_ROLLBACK;
+
+      TagsSet tagsSet = TagsSet.of(
+          dbTag.getKey(), dbTag.getValue(),
+          TwContextMetricsTemplate.TAG_EP_GROUP, nullToUnknown(transactionDefinition.getEntryPointGroup()),
+          TwContextMetricsTemplate.TAG_EP_NAME, nullToUnknown(transactionDefinition.getEntryPointName()),
+          TwContextMetricsTemplate.TAG_EP_OWNER, nullToUnknown(transactionDefinition.getEntryPointOwner()),
+          failureTag.getKey(), failureTag.getValue(),
+          isolationLevelTag.getKey(), isolationLevelTag.getValue(),
+          TAG_TRANSACTION_NAME, nullToUnknown(transactionDefinition.getName()),
+          operationTag.getKey(), operationTag.getValue(),
+          readOnlyTag.getKey(), readOnlyTag.getValue());
 
       TransactionMetrics metrics = meterCache.metersContainer(METRIC_COLLECTION_TRANSACTION_END, tagsSet, () -> {
         TransactionMetrics result = new TransactionMetrics();

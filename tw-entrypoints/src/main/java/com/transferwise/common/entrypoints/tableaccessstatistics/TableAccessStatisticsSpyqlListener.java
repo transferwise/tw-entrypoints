@@ -134,11 +134,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded, long executionTimeNs) {
       TwContext context = TwContext.current();
-      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
-      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
-      Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner());
-      Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
-      Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
+      final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
+      final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
       SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql);
 
@@ -150,12 +147,17 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       for (Entry<String, SqlOperation> entry : sqlParseResult.operations.entrySet()) {
         String opName = entry.getKey();
         SqlOperation op = entry.getValue();
-        Tag operationTag = Tag.of(TAG_OPERATION, opName);
         String firstTableName = null;
         for (String tableName : op.getTableNames()) {
-          Tag tableTag = Tag.of(TAG_TABLE, tableName);
           TagsSet tagsSet = TagsSet.of(
-              dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag, inTransactionTag, operationTag, successTag, tableTag);
+              dbTag.getKey(), dbTag.getValue(),
+              TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
+              TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
+              TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner(),
+              inTransactionTag.getKey(), inTransactionTag.getValue(),
+              TAG_OPERATION, opName,
+              successTag.getKey(), successTag.getValue(),
+              TAG_TABLE, tableName);
 
           if (firstTableName == null) {
             firstTableName = tableName;
