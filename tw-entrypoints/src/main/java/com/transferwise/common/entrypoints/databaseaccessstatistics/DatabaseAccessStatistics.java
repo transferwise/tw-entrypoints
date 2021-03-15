@@ -4,8 +4,6 @@ import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
-import io.micrometer.core.instrument.Tag;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -60,8 +58,7 @@ public class DatabaseAccessStatistics {
 
   public DatabaseAccessStatistics(String databaseName) {
     this.databaseName = databaseName;
-    Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
-    this.tagsSet = TagsSet.of(Collections.singletonList(dbTag));
+    this.tagsSet = TagsSet.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
   }
 
   public void registerCommit(long timeTakenNs) {

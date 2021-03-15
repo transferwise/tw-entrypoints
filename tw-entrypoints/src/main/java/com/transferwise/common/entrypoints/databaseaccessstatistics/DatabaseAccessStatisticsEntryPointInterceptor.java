@@ -10,7 +10,6 @@ import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,12 +73,11 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
   private void registerCall(TwContext context, Map<String, DatabaseAccessStatistics> dbDasMap) {
     for (DatabaseAccessStatistics das : dbDasMap.values()) {
-      Tag dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, das.getDatabaseName());
-      Tag entryPointNameTag = Tag.of(TwContextMetricsTemplate.TAG_EP_NAME, context.getName());
-      Tag entryPointGroupTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup());
-      Tag entryPointOwnerTag = Tag.of(TwContextMetricsTemplate.TAG_EP_GROUP, context.getOwner());
-
-      TagsSet tagsSet = TagsSet.of(dbTag, entryPointGroupTag, entryPointNameTag, entryPointOwnerTag);
+      TagsSet tagsSet = TagsSet.of(
+          EntryPointsMetrics.TAG_DATABASE, das.getDatabaseName(),
+          TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
+          TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
+          TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner());
 
       final long commitsCount = das.getCommitsCount();
       final long rollbacksCount = das.getRollbacksCount();
