@@ -3,9 +3,9 @@ version: 2
 references:
   container_config: &container_config
     docker:
-      - image: arti.tw.ee/circle_openjdk13:latest
+      - image: arti.tw.ee/circle_openjdk11:latest
         user: circleci
-      - image: circleci/mariadb:10.3
+      - image: circleci/mariadb:10.4
         command: mysqld --max_allowed_packet=32m --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
         environment:
           MYSQL_ROOT_PASSWORD: q1w2e3r4
