@@ -9,7 +9,7 @@ ext.projectScmConnection = "scm:git:git://github.com/transferwise/${projectGitHu
 ext.springBootVersion = "2.3.11.RELEASE"
 ext.twContextVersion = "0.11.0"
 ext.twBaseUtilsVersion = "1.5.0"
-ext.twSpyqlCoreVersion = "1.3.0"
+ext.twSpyqlCoreVersion = "1.4.0"
 
 apply plugin: "java-library"
 apply plugin: "checkstyle"
