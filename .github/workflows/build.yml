@@ -16,7 +16,7 @@ jobs:
     env:
       ZOOKEEPER_TCP_2181: 2181
     services:
-      zookeeper:
+      mariadb:
         image: mariadb:10.4
         ports:
           - 3306:3306
@@ -35,7 +35,7 @@ jobs:
       - name: "Assemble jar"
         run: GRADLE_USER_HOME=$HOME/.gradle ./gradlew assemble --console=plain --no-daemon
       - name: "Run tests"
-        run: GRADLE_USER_HOME=$HOME/.gradle ./gradlew check --console=plain --no-daemon --stacktrace
+        run: GRADLE_USER_HOME=$HOME/.gradle ./gradlew -Dspring.profiles.include=continuous-integration check --console=plain --no-daemon --stacktrace
       - name: "Test if publishing works"
         run: GRADLE_USER_HOME=$HOME/.gradle ./gradlew publishToMavenLocal --console=plain --no-daemon --stacktrace
       - name: "Publish Test Report"

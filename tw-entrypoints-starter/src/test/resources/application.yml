@@ -8,10 +8,10 @@ tw-entrypoints:
       cache-size-mib: 1
 
 ---
-embedded:
-  mysql:
-    port: 3306
 spring:
   config:
     activate:
       on-profile: continuous-integration
+embedded:
+  mysql:
+    port: 3306
