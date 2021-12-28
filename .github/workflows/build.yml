@@ -13,8 +13,6 @@ jobs:
     name: "Build and Test"
     runs-on:
       - ubuntu-latest
-    env:
-      ZOOKEEPER_TCP_2181: 2181
     services:
       mariadb:
         image: mariadb:10.4
