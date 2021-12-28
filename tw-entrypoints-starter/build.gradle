@@ -16,6 +16,7 @@ dependencies {
     implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
     implementation "com.transferwise.common:tw-spyql-core:${twSpyqlCoreVersion}"
     implementation 'io.micrometer:micrometer-core'
+    implementation 'org.apache.commons:commons-lang3'
     implementation "com.transferwise.common:tw-context:${twContextVersion}"
     implementation "com.zaxxer:HikariCP"
     implementation "com.transferwise.common:tw-gaffer-jta:1.4.0"
