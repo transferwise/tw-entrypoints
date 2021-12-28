@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.transferwise.common.baseutils.transactionsmanagement.ITransactionsHelper;
 import com.transferwise.common.entrypoints.test.BaseIntTest;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.prometheus.PrometheusTimer;
+import io.micrometer.core.instrument.Timer;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
     assertThat(startCounter.getId().getTag("readOnly")).isEqualTo("false");
     assertThat(startCounter.getId().getTag("transactionName")).isEqualTo("Unknown");
 
-    PrometheusTimer finalizationTimer = (PrometheusTimer) meterRegistry.get(METRIC_TRANSACTION_FINALIZATION).timer();
+    var finalizationTimer = meterRegistry.get(METRIC_TRANSACTION_FINALIZATION).timer();
     assertThat(finalizationTimer.count()).isEqualTo(1);
     assertThat(finalizationTimer.getId().getTag("db")).isEqualTo("mydb");
     assertThat(finalizationTimer.getId().getTag("epName")).isEqualTo("Generic");
@@ -58,7 +58,7 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
     assertThat(finalizationTimer.getId().getTag("resolution")).isEqualTo("commit");
     assertThat(finalizationTimer.getId().getTag("resolutionSuccess")).isEqualTo("true");
 
-    PrometheusTimer finishedTimer = (PrometheusTimer) meterRegistry.get(METRIC_TRANSACTION_COMPLETION).timer();
+    var finishedTimer = meterRegistry.get(METRIC_TRANSACTION_COMPLETION).timer();
     assertThat(finishedTimer.count()).isEqualTo(1);
     assertThat(finishedTimer.getId().getTag("db")).isEqualTo("mydb");
     assertThat(finishedTimer.getId().getTag("epName")).isEqualTo("Generic");
@@ -69,7 +69,7 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
     assertThat(finishedTimer.getId().getTag("resolution")).isEqualTo("commit");
     assertThat(finishedTimer.getId().getTag("resolutionSuccess")).isEqualTo("true");
 
-    assertThat(finishedTimer.histogramCounts().length).isEqualTo(8);
+    assertThat(finishedTimer.takeSnapshot().histogramCounts().length).isEqualTo(8);
   }
 
   @Test
@@ -86,11 +86,11 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
     Counter startCounter = meterRegistry.get(METRIC_TRANSACTION_START).counter();
     assertThat(startCounter.count()).isEqualTo(1);
 
-    PrometheusTimer finalizationTimer = (PrometheusTimer) meterRegistry.get(METRIC_TRANSACTION_FINALIZATION).timer();
+    Timer finalizationTimer = meterRegistry.get(METRIC_TRANSACTION_FINALIZATION).timer();
     assertThat(finalizationTimer.getId().getTag("resolution")).isEqualTo("rollback");
     assertThat(finalizationTimer.getId().getTag("resolutionSuccess")).isEqualTo("true");
 
-    PrometheusTimer finishedTimer = (PrometheusTimer) meterRegistry.get(METRIC_TRANSACTION_COMPLETION).timer();
+    Timer finishedTimer = meterRegistry.get(METRIC_TRANSACTION_COMPLETION).timer();
     assertThat(finishedTimer.getId().getTag("resolution")).isEqualTo("rollback");
     assertThat(finishedTimer.getId().getTag("resolutionSuccess")).isEqualTo("true");
   }

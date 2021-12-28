@@ -6,10 +6,10 @@ import com.transferwise.common.spyql.SpyqlDataSource;
 import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 public abstract class SpyqlInstrumentingDataSourceBeanProcessor implements BeanPostProcessor {

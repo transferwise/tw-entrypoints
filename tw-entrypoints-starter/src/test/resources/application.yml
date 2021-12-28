@@ -9,7 +9,9 @@ tw-entrypoints:
 
 ---
 spring:
-  profiles: circle
+  config:
+    activate:
+      on-profile: continuous-integration
 embedded:
   mysql:
     port: 3306
