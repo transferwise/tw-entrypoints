@@ -94,6 +94,9 @@ compileTestJava {
 }
 
 test {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
     systemProperty("spring.profiles.include", System.getProperty("spring.profiles.include"))
     useJUnitPlatform()
     testLogging {

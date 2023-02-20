@@ -28,8 +28,6 @@ task tagRelease {
     }
 }
 
-group = "com.transferwise.common"
-
 nexusPublishing {
     repositories {
         sonatype {
