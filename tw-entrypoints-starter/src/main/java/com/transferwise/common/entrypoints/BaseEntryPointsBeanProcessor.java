@@ -26,7 +26,7 @@ public abstract class BaseEntryPointsBeanProcessor implements BeanPostProcessor,
       var dataSource = (DataSource) bean;
 
       if (!dataSource.isWrapperFor(SpyqlDataSource.class)) {
-        throw new IllegalStateException("DataSource has no wrapper for 'SpyqlDataSource'.");
+        throw new IllegalStateException("DataSource has no wrapper for 'SpyqlDataSource'. Is the `tw-spyql-starter` dependency present?");
       }
 
       var spyqlDataSource = dataSource.unwrap(SpyqlDataSource.class);
