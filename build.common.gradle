@@ -6,10 +6,6 @@ ext.artifactoryPassword = project.hasProperty("artifactoryPassword") ? project.a
 ext.projectGitHubRepoName = "tw-entrypoints"
 ext.projectScmUrl = "https://github.com/transferwise/${projectGitHubRepoName}"
 ext.projectScmConnection = "scm:git:git://github.com/transferwise/${projectGitHubRepoName}.git"
-ext.springBootVersion = "2.5.8"
-ext.twContextVersion = "0.11.0"
-ext.twBaseUtilsVersion = "1.5.0"
-ext.twSpyqlCoreVersion = "1.4.0"
 
 apply plugin: "java-library"
 apply plugin: "checkstyle"
@@ -23,21 +19,37 @@ repositories {
     mavenLocal()
 }
 
+apply from: "${project.rootDir}/build.libraries.gradle"
+
+configurations {
+    local {
+        canBeResolved(false)
+        canBeConsumed(false)
+    }
+    compileClasspath {
+        extendsFrom(local)
+    }
+    runtimeClasspath {
+        extendsFrom(local)
+    }
+    testCompileClasspath {
+        extendsFrom(local)
+    }
+    testRuntimeClasspath {
+        extendsFrom(local)
+    }
+    annotationProcessor {
+        extendsFrom(local)
+    }
+    testAnnotationProcessor {
+        extendsFrom(local)
+    }
+}
+
 dependencies {
-    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-    compileOnly(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-    testAnnotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}"))
-
-    annotationProcessor("org.projectlombok:lombok")
-
-    compileOnly("org.projectlombok:lombok")
-
-    testAnnotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.projectlombok:lombok")
-    testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.assertj:assertj-core'
+    local platform(libraries.springBootDependencies + '!!')
+    local libraries.lombok
+    local libraries.spotbugsAnnotations
 }
 
 java {
@@ -61,6 +73,14 @@ compileJava {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint'
     options.compilerArgs << '-Xlint:-processing'
+
+    options.fork = true
+    options.forkOptions.jvmArgs << '-Xmx256m'
+}
+
+compileTestJava {
+    options.fork = true
+    options.forkOptions.jvmArgs << '-Xmx256m'
 }
 
 test {

@@ -2,37 +2,31 @@ ext.projectName = "Transferwise EntryPoints Starter"
 ext.projectDescription = "Transferwise EntryPoints Starter - Spring Boot Starter for tw-entrypoints"
 ext.projectArtifactName = "tw-entrypoints-starter"
 
-apply from: '../build.common.gradle'
-apply from: '../build.publishing.gradle'
+apply from: "${project.rootDir}/build.common.gradle"
+apply from: "${project.rootDir}/build.publishing.gradle"
 
 dependencies {
-    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
+    annotationProcessor libraries.springBootConfigurationProcessor
+    compileOnly libraries.springBootConfigurationProcessor
 
     implementation(project(":tw-entrypoints"))
 
-    implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
-    implementation('org.springframework.boot:spring-boot-autoconfigure')
-    implementation('org.springframework:spring-context')
-    implementation "com.transferwise.common:tw-base-utils:${twBaseUtilsVersion}"
-    implementation "com.transferwise.common:tw-spyql-core:${twSpyqlCoreVersion}"
-    implementation 'io.micrometer:micrometer-core'
-    implementation 'org.apache.commons:commons-lang3'
-    implementation "com.transferwise.common:tw-context:${twContextVersion}"
-    implementation "com.zaxxer:HikariCP"
-    implementation "com.transferwise.common:tw-gaffer-jta:1.4.0"
+    implementation libraries.commonsLang3
+    implementation libraries.hikariCp
+    implementation libraries.micrometerCore
+    implementation libraries.springBootStarter
+    implementation libraries.twBaseUtils
+    implementation libraries.twContextStarter
+    implementation libraries.twSpyqlStarter
 
-    runtimeOnly("com.transferwise.common:tw-context-starter:${twContextVersion}")
+    testImplementation libraries.caffeine
+    testImplementation libraries.testContainersMariaDb
+    testImplementation libraries.slf4jApi
+    testImplementation libraries.springBootStarterJdbc
+    testImplementation libraries.springBootStarterTest
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    testImplementation 'com.zaxxer:HikariCP'
-    testImplementation 'org.mariadb.jdbc:mariadb-java-client'
-    testImplementation 'io.micrometer:micrometer-registry-prometheus'
-    testImplementation 'org.testcontainers:mariadb:1.15.3'
-    testImplementation("org.slf4j:slf4j-api")
-    testImplementation 'org.apache.commons:commons-lang3'
-    testImplementation 'com.github.ben-manes.caffeine:caffeine'
-
-    testRuntimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
-    testRuntimeOnly 'org.flywaydb:flyway-core'
+    testRuntimeOnly libraries.flywayCore
+    testRuntimeOnly libraries.mariadbJavaClient
+    testRuntimeOnly libraries.micrometerRegistryPrometheus
+    testRuntimeOnly libraries.springBootStarterActuator
 }
