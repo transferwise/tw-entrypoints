@@ -26,6 +26,9 @@ dependencies {
     testImplementation libraries.springBootStarterTest
 
     testRuntimeOnly libraries.flywayCore
+    if (springBootVersion.startsWith("2.7")) {
+        testRuntimeOnly libraries.flywayMysql
+    }
     testRuntimeOnly libraries.mariadbJavaClient
     testRuntimeOnly libraries.micrometerRegistryPrometheus
     testRuntimeOnly libraries.springBootStarterActuator

@@ -18,6 +18,7 @@ ext {
             caffeine                        : "com.github.ben-manes.caffeine:caffeine",
             commonsLang3                    : "org.apache.commons:commons-lang3",
             flywayCore                      : "org.flywaydb:flyway-core",
+            flywayMysql                     : 'org.flywaydb:flyway-mysql',
 
             hikariCp                        : "com.zaxxer:HikariCP",
             lombok                          : "org.projectlombok:lombok",
