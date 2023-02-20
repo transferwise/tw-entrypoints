@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2023-02-14
+
+### Changed
+
+* Specifying an order for bean post processor, so it will run after Spyql bean post processor.
+
+### Removed
+
+* `tw-entrypoints-starter` does not add Spyql data source wrapper anymore.
+  This is now delegated to `tw-spyql-starter`.
+
+### Added
+
+* Spring Boot matrix tests.
+
 ## [2.7.1] - 2022-02-01
 
 * Stop enforcing springboot platform

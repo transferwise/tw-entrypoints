@@ -1,12 +1,12 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import com.transferwise.common.entrypoints.SpyqlInstrumentingDataSourceBeanProcessor;
+import com.transferwise.common.entrypoints.BaseEntryPointsBeanProcessor;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
-public class DatabaseAccessStatisticsBeanPostProcessor extends SpyqlInstrumentingDataSourceBeanProcessor {
+public class DatabaseAccessStatisticsBeanPostProcessor extends BaseEntryPointsBeanProcessor {
 
   @Value("${tw-entrypoints.das.strictMode:false}")
   private boolean strictMode;

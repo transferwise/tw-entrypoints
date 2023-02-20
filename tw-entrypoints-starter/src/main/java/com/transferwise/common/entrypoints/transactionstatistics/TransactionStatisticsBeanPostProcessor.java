@@ -1,11 +1,11 @@
 package com.transferwise.common.entrypoints.transactionstatistics;
 
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
-import com.transferwise.common.entrypoints.SpyqlInstrumentingDataSourceBeanProcessor;
+import com.transferwise.common.entrypoints.BaseEntryPointsBeanProcessor;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import org.springframework.beans.factory.BeanFactory;
 
-public class TransactionStatisticsBeanPostProcessor extends SpyqlInstrumentingDataSourceBeanProcessor {
+public class TransactionStatisticsBeanPostProcessor extends BaseEntryPointsBeanProcessor {
 
   private final BeanFactory beanFactory;
 
