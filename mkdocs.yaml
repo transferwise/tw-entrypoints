@@ -3,3 +3,4 @@ repo_url: https://github.com/transferwise/tw-entrypoints
 edit_uri: blob/master/docs/
 nav:
   - Overview and usage: index.md
+  - Contributing: contributing.md
