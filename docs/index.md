@@ -5,7 +5,7 @@
 * [Setup](#setup)
 * [Integration tests](#integration-tests)
 * [License](#license)
-* [Contribution Guide](contribution.md)
+* [Contribution Guide](contributing.md)
 
 ## Intro
 
