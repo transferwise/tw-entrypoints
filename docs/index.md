@@ -1,5 +1,14 @@
 # Tw-EntryPoints documentation
 
+## Table of Contents
+* [Introduction](#intro)
+* [Setup](#setup)
+* [Integration tests](#integration-tests)
+* [License](#license)
+* [Contribution Guide](contribution.md)
+
+## Intro
+
 Provides various metrics for service's databases usage.
 
 Is built on top of
@@ -8,6 +17,7 @@ Is built on top of
 - https://github.com/transferwise/tw-spyql
 
 Integrates nicely with Transferwise Entrypoints system.
+
 
 Example dashboards:
 
