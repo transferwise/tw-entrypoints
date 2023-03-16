@@ -19,7 +19,7 @@ public class ExecutionStatisticIntTest extends BaseIntTest {
   void executionStatisticsAreGathered() {
     TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> log.info("I'm inside an entrypoint!"));
 
-    List<Meter> meters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints.Es.timeTaken"))
+    List<Meter> meters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints_Es_timeTaken"))
         .collect(Collectors.toList());
 
     assertThat(meters.size()).isEqualTo(1);
@@ -34,7 +34,7 @@ public class ExecutionStatisticIntTest extends BaseIntTest {
       throw new RuntimeException("Something went wrong.");
     }));
 
-    List<Meter> meters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints.Es.timeTaken"))
+    List<Meter> meters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints_Es_timeTaken"))
         .collect(Collectors.toList());
 
     assertThat(meters.size()).isEqualTo(1);

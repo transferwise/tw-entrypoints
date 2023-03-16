@@ -39,21 +39,21 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
 
     Map<String, Meter> meters = metersAsMap();
 
-    assertThat(((DistributionSummary) meters.get("Registered.NTQueries")).count()).isEqualTo(1);
-    assertThat(((DistributionSummary) meters.get("Registered.NTQueries")).mean()).isEqualTo(1);
-    assertThat(meters.get("Registered.NTQueries").getId().getTag("db")).isEqualTo("mydb");
-    assertThat(((DistributionSummary) meters.get("Registered.TQueries")).mean()).isEqualTo(0);
-    assertThat(((DistributionSummary) meters.get("Registered.MaxConcurrentConnections")).mean()).isEqualTo(1);
-    assertThat(((DistributionSummary) meters.get("Registered.RemainingOpenConnections")).mean()).isEqualTo(0);
-    assertThat(((Timer) meters.get("Registered.TimeTaken")).mean(TimeUnit.NANOSECONDS)).isGreaterThan(0);
-    assertThat(((DistributionSummary) meters.get("Registered.Commits")).mean()).isEqualTo(0);
-    assertThat(((DistributionSummary) meters.get("Registered.Rollbacks")).mean()).isEqualTo(0);
-    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).count()).isEqualTo(1);
-    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_NTQueries")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_NTQueries")).mean()).isEqualTo(1);
+    assertThat(meters.get("Registered_NTQueries").getId().getTag("db")).isEqualTo("mydb");
+    assertThat(((DistributionSummary) meters.get("Registered_TQueries")).mean()).isEqualTo(0);
+    assertThat(((DistributionSummary) meters.get("Registered_MaxConcurrentConnections")).mean()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_RemainingOpenConnections")).mean()).isEqualTo(0);
+    assertThat(((Timer) meters.get("Registered_TimeTaken")).mean(TimeUnit.NANOSECONDS)).isGreaterThan(0);
+    assertThat(((DistributionSummary) meters.get("Registered_Commits")).mean()).isEqualTo(0);
+    assertThat(((DistributionSummary) meters.get("Registered_Rollbacks")).mean()).isEqualTo(0);
+    assertThat(((DistributionSummary) meters.get("Registered_AffectedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_FetchedRows")).count()).isEqualTo(1);
 
-    assertThat(((Counter) meters.get("Unknown.Commits")).count()).isEqualTo(0);
-    assertThat(((Counter) meters.get("Unknown.NTQueries")).count()).isEqualTo(0);
-    assertThat(((Counter) meters.get("Unknown.TQueries")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_Commits")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_NTQueries")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_TQueries")).count()).isEqualTo(0);
   }
 
   @Test
@@ -65,12 +65,12 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
     });
 
     Map<String, Meter> meters = metersAsMap();
-    assertThat(meters.get("Registered.NTQueries")).isNull();
-    assertThat(((Counter) meters.get("Unknown.Commits")).count()).isEqualTo(0);
-    assertThat(((Counter) meters.get("Unknown.NTQueries")).count()).isEqualTo(1);
-    assertThat(((Counter) meters.get("Unknown.TQueries")).count()).isEqualTo(0);
-    assertThat(((Counter) meters.get("Unknown.AffectedRows")).count()).isEqualTo(0);
-    assertThat(((Counter) meters.get("Unknown.FetchedRows")).count()).isEqualTo(0);
+    assertThat(meters.get("Registered_NTQueries")).isNull();
+    assertThat(((Counter) meters.get("Unknown_Commits")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_NTQueries")).count()).isEqualTo(1);
+    assertThat(((Counter) meters.get("Unknown_TQueries")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_AffectedRows")).count()).isEqualTo(0);
+    assertThat(((Counter) meters.get("Unknown_FetchedRows")).count()).isEqualTo(0);
   }
 
   @Test
@@ -89,16 +89,16 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
 
     Map<String, Meter> meters = metersAsMap();
 
-    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).count()).isEqualTo(1);
-    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_AffectedRows")).count()).isEqualTo(1);
+    assertThat(((DistributionSummary) meters.get("Registered_FetchedRows")).count()).isEqualTo(1);
 
-    assertThat(((DistributionSummary) meters.get("Registered.AffectedRows")).totalAmount()).isEqualTo(31 + 7 + 5);
-    assertThat(((DistributionSummary) meters.get("Registered.FetchedRows")).totalAmount()).isEqualTo(31 - 5);
+    assertThat(((DistributionSummary) meters.get("Registered_AffectedRows")).totalAmount()).isEqualTo(31 + 7 + 5);
+    assertThat(((DistributionSummary) meters.get("Registered_FetchedRows")).totalAmount()).isEqualTo(31 - 5);
 
   }
 
   private Map<String, Meter> metersAsMap() {
-    return meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("EntryPoints.Das")).collect(Collectors
-        .toMap(m -> StringUtils.substringAfter(m.getId().getName(), "EntryPoints.Das."), m -> m));
+    return meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("EntryPoints_Das")).collect(Collectors
+        .toMap(m -> StringUtils.substringAfter(m.getId().getName(), "EntryPoints_Das_"), m -> m));
   }
 }

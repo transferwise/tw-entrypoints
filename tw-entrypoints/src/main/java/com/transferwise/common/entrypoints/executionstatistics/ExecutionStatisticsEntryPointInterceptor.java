@@ -1,7 +1,5 @@
 package com.transferwise.common.entrypoints.executionstatistics;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetrics.METRIC_PREFIX_ENTRYPOINTS;
-
 import com.transferwise.common.baseutils.clock.ClockHolder;
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.TagsSet;
@@ -13,8 +11,8 @@ import java.util.function.Supplier;
 
 public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecutionInterceptor {
 
-  public static final String METRIC_PREFIX_ENTRYPOINTS_ES = METRIC_PREFIX_ENTRYPOINTS + "Es.";
-  public static final String METRIC_TIME_TAKEN = METRIC_PREFIX_ENTRYPOINTS_ES + "timeTaken";
+  public static final String METRIC_PREFIX_ENTRYPOINTS_ES = "EntryPoints_Es_";
+  public static final String TIMER_TIME_TAKEN = "EntryPoints_Es_timeTaken";
 
   private final IMeterCache meterCache;
 
@@ -39,7 +37,7 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
           TwContextMetricsTemplate.TAG_EP_NAME, twContext.getName(),
           TwContextMetricsTemplate.TAG_EP_OWNER, twContext.getOwner());
 
-      meterCache.timer(METRIC_TIME_TAKEN, tagsSet).record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);
+      meterCache.timer(TIMER_TIME_TAKEN, tagsSet).record(ClockHolder.getClock().millis() - startTimeMs, TimeUnit.MILLISECONDS);
     }
   }
 }

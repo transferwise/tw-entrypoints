@@ -33,16 +33,16 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
   /**
    * How long did the whole transaction take.
    */
-  public static final String METRIC_TRANSACTION_COMPLETION = "database.transaction.completion";
+  public static final String METRIC_TRANSACTION_COMPLETION = "database_transaction_completion";
 
-  public static final String METRIC_TRANSACTION_START = "database.transaction.start";
+  public static final String METRIC_TRANSACTION_START = "database_transaction_start";
 
   /**
    * How long did only the commit/rollback operation take.
    */
-  public static final String METRIC_TRANSACTION_FINALIZATION = "database.transaction.finalization";
+  public static final String METRIC_TRANSACTION_FINALIZATION = "database_transaction_finalization";
 
-  public static final String METRIC_COLLECTION_TRANSACTION_END = "database.transaction.end";
+  public static final String METRIC_COLLECTION_TRANSACTION_END = "database_transaction_end";
 
   private static final Tag TAG_READ_ONLY_TRUE = Tag.of(TAG_READ_ONLY, "true");
   private static final Tag TAG_READ_ONLY_FALSE = Tag.of(TAG_READ_ONLY, "false");

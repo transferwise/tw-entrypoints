@@ -1,7 +1,5 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetrics.METRIC_PREFIX_ENTRYPOINTS;
-
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.TagsSet;
 import com.transferwise.common.context.TwContext;
@@ -21,29 +19,27 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextExecutionInterceptor {
 
-  public static final String METRIC_PREFIX_DAS = METRIC_PREFIX_ENTRYPOINTS + "Das.";
+  public static final String METRIC_PREFIX_DAS = "EntryPoints_Das_";
 
-  public static final String METRIC_PREFIX_DAS_REGISTERED = METRIC_PREFIX_DAS + "Registered.";
-  public static final String METRIC_REGISTERED_TIME_TAKEN = METRIC_PREFIX_DAS_REGISTERED + "TimeTaken";
-  public static final String METRIC_REGISTERED_FETCHED_ROWS = METRIC_PREFIX_DAS_REGISTERED + "FetchedRows";
-  public static final String METRIC_REGISTERED_AFFECTED_ROWS = METRIC_PREFIX_DAS_REGISTERED + "AffectedRows";
-  public static final String METRIC_REGISTERED_EMPTY_TRANSACTIONS = METRIC_PREFIX_DAS_REGISTERED + "EmptyTransactions";
-  public static final String METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS = METRIC_PREFIX_DAS_REGISTERED + "RemainingOpenConnections";
-  public static final String METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS = METRIC_PREFIX_DAS_REGISTERED + "MaxConcurrentConnections";
-  public static final String METRIC_REGISTERED_T_QUERIES = METRIC_PREFIX_DAS_REGISTERED + "TQueries";
-  public static final String METRIC_REGISTERED_NT_QUERIES = METRIC_PREFIX_DAS_REGISTERED + "NTQueries";
-  public static final String METRIC_REGISTERED_ROLLBACKS = METRIC_PREFIX_DAS_REGISTERED + "Rollbacks";
-  public static final String METRIC_REGISTERED_COMMITS = METRIC_PREFIX_DAS_REGISTERED + "Commits";
+  public static final String TIMER_REGISTERED_TIME_TAKEN = "EntryPoints_Das_Registered_TimeTaken";
+  public static final String SUMMARY_REGISTERED_FETCHED_ROWS = "EntryPoints_Das_Registered_FetchedRows";
+  public static final String SUMMARY_REGISTERED_AFFECTED_ROWS = "EntryPoints_Das_Registered_AffectedRows";
+  public static final String SUMMARY_REGISTERED_EMPTY_TRANSACTIONS = "EntryPoints_Das_Registered_EmptyTransactions";
+  public static final String SUMMARY_REGISTERED_REMAINING_OPEN_CONNECTIONS = "EntryPoints_Das_Registered_RemainingOpenConnections";
+  public static final String SUMMARY_REGISTERED_MAX_CONCURRENT_CONNECTIONS = "EntryPoints_Das_Registered_MaxConcurrentConnections";
+  public static final String SUMMARY_REGISTERED_T_QUERIES = "EntryPoints_Das_Registered_TQueries";
+  public static final String SUMMARY_REGISTERED_NT_QUERIES = "EntryPoints_Das_Registered_NTQueries";
+  public static final String SUMMARY_REGISTERED_ROLLBACKS = "EntryPoints_Das_Registered_Rollbacks";
+  public static final String SUMMARY_REGISTERED_COMMITS = "EntryPoints_Das_Registered_Commits";
 
-  public static final String METRIC_PREFIX_DAS_UNREGISTERED = METRIC_PREFIX_DAS + "Unknown.";
-  public static final String METRIC_UNREGISTERED_FETCHED_ROWS = METRIC_PREFIX_DAS_UNREGISTERED + "FetchedRows";
-  public static final String METRIC_UNREGISTERED_AFFECTED_ROWS = METRIC_PREFIX_DAS_UNREGISTERED + "AffectedRows";
-  public static final String METRIC_UNREGISTERED_EMPTY_TRANSACTIONS = METRIC_PREFIX_DAS_UNREGISTERED + "EmptyTransactions";
-  public static final String METRIC_UNREGISTERED_TIME_TAKEN_NS = METRIC_PREFIX_DAS_UNREGISTERED + "TimeTakenNs";
-  public static final String METRIC_UNREGISTERED_T_QUERIES = METRIC_PREFIX_DAS_UNREGISTERED + "TQueries";
-  public static final String METRIC_UNREGISTERED_NT_QUERIES = METRIC_PREFIX_DAS_UNREGISTERED + "NTQueries";
-  public static final String METRIC_UNREGISTERED_ROLLBACKS = METRIC_PREFIX_DAS_UNREGISTERED + "Rollbacks";
-  public static final String METRIC_UNREGISTERED_COMMITS = METRIC_PREFIX_DAS_UNREGISTERED + "Commits";
+  public static final String COUNTER_UNREGISTERED_FETCHED_ROWS = "EntryPoints_Das_Unknown_FetchedRows";
+  public static final String COUNTER_UNREGISTERED_AFFECTED_ROWS = "EntryPoints_Das_Unknown_AffectedRows";
+  public static final String COUNTER_UNREGISTERED_EMPTY_TRANSACTIONS = "EntryPoints_Das_Unknown_EmptyTransactions";
+  public static final String COUNTER_UNREGISTERED_TIME_TAKEN_NS = "EntryPoints_Das_Unknown_TimeTakenNs";
+  public static final String COUNTER_UNREGISTERED_T_QUERIES = "EntryPoints_Das_Unknown_TQueries";
+  public static final String COUNTER_UNREGISTERED_NT_QUERIES = "EntryPoints_Das_Unknown_NTQueries";
+  public static final String COUNTER_UNREGISTERED_ROLLBACKS = "EntryPoints_Das_Unknown_Rollbacks";
+  public static final String COUNTER_UNREGISTERED_COMMITS = "EntryPoints_Das_Unknown_Commits";
 
   private final IMeterCache meterCache;
 
@@ -89,16 +85,16 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
       CallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "callMetrics", tagsSet, () -> {
         CallMeters result = new CallMeters();
-        result.commits = meterCache.summary(METRIC_REGISTERED_COMMITS, tagsSet);
-        result.rollbacks = meterCache.summary(METRIC_REGISTERED_ROLLBACKS, tagsSet);
-        result.nonTransactionalQueries = meterCache.summary(METRIC_REGISTERED_NT_QUERIES, tagsSet);
-        result.transactionalQueries = meterCache.summary(METRIC_REGISTERED_T_QUERIES, tagsSet);
-        result.maxConcurrentConnections = meterCache.summary(METRIC_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tagsSet);
-        result.remainingOpenConnections = meterCache.summary(METRIC_REGISTERED_REMAINING_OPEN_CONNECTIONS, tagsSet);
-        result.emptyTransactions = meterCache.summary(METRIC_REGISTERED_EMPTY_TRANSACTIONS, tagsSet);
-        result.affectedRows = meterCache.summary(METRIC_REGISTERED_AFFECTED_ROWS, tagsSet);
-        result.fetchedRows = meterCache.summary(METRIC_REGISTERED_FETCHED_ROWS, tagsSet);
-        result.timeTakenNs = meterCache.timer(METRIC_REGISTERED_TIME_TAKEN, tagsSet);
+        result.commits = meterCache.summary(SUMMARY_REGISTERED_COMMITS, tagsSet);
+        result.rollbacks = meterCache.summary(SUMMARY_REGISTERED_ROLLBACKS, tagsSet);
+        result.nonTransactionalQueries = meterCache.summary(SUMMARY_REGISTERED_NT_QUERIES, tagsSet);
+        result.transactionalQueries = meterCache.summary(SUMMARY_REGISTERED_T_QUERIES, tagsSet);
+        result.maxConcurrentConnections = meterCache.summary(SUMMARY_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tagsSet);
+        result.remainingOpenConnections = meterCache.summary(SUMMARY_REGISTERED_REMAINING_OPEN_CONNECTIONS, tagsSet);
+        result.emptyTransactions = meterCache.summary(SUMMARY_REGISTERED_EMPTY_TRANSACTIONS, tagsSet);
+        result.affectedRows = meterCache.summary(SUMMARY_REGISTERED_AFFECTED_ROWS, tagsSet);
+        result.fetchedRows = meterCache.summary(SUMMARY_REGISTERED_FETCHED_ROWS, tagsSet);
+        result.timeTakenNs = meterCache.timer(TIMER_REGISTERED_TIME_TAKEN, tagsSet);
         return result;
       });
 
@@ -151,14 +147,14 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       TagsSet tagsSet = das.getTagsSet();
       UnknownCallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "unknownCallMetrics", tagsSet, () -> {
         UnknownCallMeters result = new UnknownCallMeters();
-        result.commits = meterCache.counter(METRIC_UNREGISTERED_COMMITS, tagsSet);
-        result.rollbacks = meterCache.counter(METRIC_UNREGISTERED_ROLLBACKS, tagsSet);
-        result.nonTransactionalQueries = meterCache.counter(METRIC_UNREGISTERED_NT_QUERIES, tagsSet);
-        result.transactionalQueries = meterCache.counter(METRIC_UNREGISTERED_T_QUERIES, tagsSet);
-        result.timeTakenNs = meterCache.counter(METRIC_UNREGISTERED_TIME_TAKEN_NS, tagsSet);
-        result.emptyTransactions = meterCache.counter(METRIC_UNREGISTERED_EMPTY_TRANSACTIONS, tagsSet);
-        result.affectedRows = meterCache.counter(METRIC_UNREGISTERED_AFFECTED_ROWS, tagsSet);
-        result.fetchedRows = meterCache.counter(METRIC_UNREGISTERED_FETCHED_ROWS, tagsSet);
+        result.commits = meterCache.counter(COUNTER_UNREGISTERED_COMMITS, tagsSet);
+        result.rollbacks = meterCache.counter(COUNTER_UNREGISTERED_ROLLBACKS, tagsSet);
+        result.nonTransactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_NT_QUERIES, tagsSet);
+        result.transactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_T_QUERIES, tagsSet);
+        result.timeTakenNs = meterCache.counter(COUNTER_UNREGISTERED_TIME_TAKEN_NS, tagsSet);
+        result.emptyTransactions = meterCache.counter(COUNTER_UNREGISTERED_EMPTY_TRANSACTIONS, tagsSet);
+        result.affectedRows = meterCache.counter(COUNTER_UNREGISTERED_AFFECTED_ROWS, tagsSet);
+        result.fetchedRows = meterCache.counter(COUNTER_UNREGISTERED_FETCHED_ROWS, tagsSet);
         return result;
       });
 

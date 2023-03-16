@@ -1,6 +1,5 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
-import static com.transferwise.common.entrypoints.EntryPointsMetrics.METRIC_PREFIX_ENTRYPOINTS;
 import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_IN_TRANSACTION;
 import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_OPERATION;
 import static com.transferwise.common.entrypoints.EntryPointsMetrics.TAG_SUCCESS;
@@ -42,15 +41,13 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
 
-  public static final String METRIC_PREFIX_ENTRYPOINTS_TAS = METRIC_PREFIX_ENTRYPOINTS + "Tas.";
-  public static final String METRIC_PREFIX_SQL_PARSER_RESULT_CACHE = METRIC_PREFIX_ENTRYPOINTS_TAS + "SqlParseResultsCache.";
-  public static final String METRIC_SQL_PARSER_RESULT_CACHE_HIT_COUNT = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitCount";
-  public static final String METRIC_SQL_PARSER_RESULT_CACHE_HIT_RATIO = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "hitRatio";
-  public static final String METRIC_SQL_PARSER_RESULT_CACHE_SIZE = METRIC_PREFIX_SQL_PARSER_RESULT_CACHE + "size";
+  public static final String GAUGE_SQL_PARSER_RESULT_CACHE_HIT_COUNT = "EntryPoints_Tas_SqlParseResultsCache_hitCount";
+  public static final String GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO = "EntryPoints_Tas_SqlParseResultsCache_hitRatio";
+  public static final String GAUGE_SQL_PARSER_RESULT_CACHE_SIZE = "EntryPoints_Tas_SqlParseResultsCache_size";
 
-  public static final String METRIC_FAILED_PARSES = METRIC_PREFIX_ENTRYPOINTS_TAS + "FailedParses";
-  public static final String METRIC_FIRST_TABLE_ACCESS = METRIC_PREFIX_ENTRYPOINTS_TAS + "FirstTableAccess";
-  public static final String METRIC_TABLE_ACCESS = METRIC_PREFIX_ENTRYPOINTS_TAS + "TableAccess";
+  public static final String COUNTER_FAILED_PARSES = "EntryPoints_Tas_FailedParses";
+  public static final String TIMER_FIRST_TABLE_ACCESS = "EntryPoints_Tas_FirstTableAccess";
+  public static final String COUNTER_TABLE_ACCESS = "EntryPoints_Tas_TableAccess";
 
   private static final long MIB = 1_000_000;
 
@@ -78,11 +75,11 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(sqlParserCacheSizeMib * MIB).recordStats()
         .executor(executor)
         .weigher((String k, SqlParseResult v) -> k.length() * 2)
-        .build(this::parseSql);
+        .build(sql -> parseSql(sql, TwContext.current()));
 
-    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).register(meterRegistry);
-    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
-    Gauge.builder(METRIC_SQL_PARSER_RESULT_CACHE_HIT_COUNT, () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_COUNT, () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
   }
 
   @Override
@@ -90,7 +87,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     return new ConnectionListener();
   }
 
-  protected SqlParseResult parseSql(String sql) {
+  protected SqlParseResult parseSql(String sql, TwContext context) {
     SqlParseResult result = new SqlParseResult();
     try {
       Statements stmts = CCJSqlParserUtil.parseStatements(sql);
@@ -109,7 +106,12 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         }
       }
     } catch (Throwable t) {
-      meterCache.counter(METRIC_FAILED_PARSES, TagsSet.of(EntryPointsMetrics.TAG_DATABASE, databaseName)).increment();
+      meterCache.counter(COUNTER_FAILED_PARSES, TagsSet.of(
+          EntryPointsMetrics.TAG_DATABASE, databaseName,
+          TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
+          TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
+          TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner()
+      )).increment();
       log.debug(t.getMessage(), t);
     }
     return result;
@@ -137,7 +139,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
       final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
-      SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql);
+      SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
 
       if (sqlParseResult == null) {
         // Already counted in failed parses.
@@ -161,9 +163,9 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
           if (firstTableName == null) {
             firstTableName = tableName;
-            meterCache.timer(METRIC_FIRST_TABLE_ACCESS, tagsSet).record(executionTimeNs, TimeUnit.NANOSECONDS);
+            meterCache.timer(TIMER_FIRST_TABLE_ACCESS, tagsSet).record(executionTimeNs, TimeUnit.NANOSECONDS);
           }
-          meterCache.counter(METRIC_TABLE_ACCESS, tagsSet).increment();
+          meterCache.counter(COUNTER_TABLE_ACCESS, tagsSet).increment();
         }
       }
     }
