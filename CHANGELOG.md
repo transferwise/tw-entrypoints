@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2023-03-16
+
+### Fixed
+
+* Hardcoding versions coming from BOMs into POM.
+  That way older dependency resolvers can work without issues as well.
+  Overall this is the most correct way to generate the POM.
+
+### Changed
+
+* When SQL parsing fails, we will also add entrypoint dimension into the failure metric, to make it clearer where a
+  problematic SQL may come from.
+
+* Refactored metrics' constants to a form easily copyable to Grafana.
+
 ## [2.8.0] - 2023-02-14
 
 ### Changed

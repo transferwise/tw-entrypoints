@@ -56,7 +56,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(counter.getId().getTag("epGroup")).isEqualTo("Test");
     assertThat(counter.count()).isEqualTo(1);
 
-    var firstTableAccessMeter = (Timer) getMeter("EntryPoints.Tas.FirstTableAccess");
+    var firstTableAccessMeter = (Timer) getMeter("EntryPoints_Tas_FirstTableAccess");
 
     assertThat(firstTableAccessMeter).isNotNull();
     assertThat(firstTableAccessMeter.getId().getTag("success")).isEqualTo("false");
@@ -118,7 +118,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(meters.size()).isEqualTo(1);
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(3);
 
-    assertThat(((Gauge) getMeter("EntryPoints.Tas.SqlParseResultsCache.size")).value()).isEqualTo(1);
+    assertThat(((Gauge) getMeter("EntryPoints_Tas_SqlParseResultsCache_size")).value()).isEqualTo(1);
   }
 
   private Meter getMeter(String name) {
@@ -127,7 +127,7 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
   }
 
   private List<Meter> getTableAccessMeters() {
-    return meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints.Tas.TableAccess"))
+    return meterRegistry.getMeters().stream().filter(m -> m.getId().getName().equals("EntryPoints_Tas_TableAccess"))
         .collect(Collectors.toList());
   }
 
