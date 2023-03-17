@@ -21,6 +21,9 @@ public class SqlParserUtils {
   public Statements parseToStatements(String sql) throws ParseException {
     sql = FUNCTION_REPLACEMENT_PATTERN.matcher(sql).replaceAll(Matcher.quoteReplacement("UNSUPPORTED()"));
 
+    /*
+      Don't use `CCJSqlParserUtil.parse`, this has an overhead of launching a new executor service and parsing the sql there.
+     */
     CCJSqlParser parser = CCJSqlParserUtil.newParser(sql).withAllowComplexParsing(false);
 
     return parser.Statements();

@@ -13,6 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 * Table access statistics can parse tables on queries containing `DATABASE()` function.
 
+### Fixed
+
+* JSqlParser is utilized in a more optimal way, by not executing the parsing in separate threads.
+
 ## [2.8.1] - 2023-03-16
 
 ### Fixed
