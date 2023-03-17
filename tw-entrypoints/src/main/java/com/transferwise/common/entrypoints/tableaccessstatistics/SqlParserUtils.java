@@ -19,7 +19,12 @@ public class SqlParserUtils {
       Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
   public Statements parseToStatements(String sql) throws ParseException {
-    sql = FUNCTION_REPLACEMENT_PATTERN.matcher(sql).replaceAll(Matcher.quoteReplacement("UNSUPPORTED()"));
+    // 99.99% of sqls don't have it, so let's avoid new string creation for those.
+    var matcher = FUNCTION_REPLACEMENT_PATTERN.matcher(sql);
+    if (matcher.find()) {
+      matcher.reset();
+      sql = matcher.replaceAll(Matcher.quoteReplacement("UNSUPPORTED()"));
+    }
 
     /*
       Don't use `CCJSqlParserUtil.parse`, this has an overhead of launching a new executor service and parsing the sql there.
