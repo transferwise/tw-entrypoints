@@ -18,4 +18,6 @@ dependencies {
     implementation libraries.twBaseUtils
     implementation libraries.twSpyqlCore
 
+    testImplementation libraries.junitJupiter
+
 }

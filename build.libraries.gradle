@@ -21,6 +21,7 @@ ext {
             flywayMysql                     : 'org.flywaydb:flyway-mysql',
 
             hikariCp                        : "com.zaxxer:HikariCP",
+            junitJupiter                    : "org.junit.jupiter:junit-jupiter",
             lombok                          : "org.projectlombok:lombok",
             mariadbJavaClient               : "org.mariadb.jdbc:mariadb-java-client",
             micrometerCore                  : "io.micrometer:micrometer-core",
