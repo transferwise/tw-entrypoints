@@ -22,7 +22,7 @@ public abstract class BaseEntryPointsBeanProcessor implements BeanPostProcessor,
       return bean;
     }
 
-    return ExceptionUtils.doUnchecked(() -> {
+    ExceptionUtils.doUnchecked(() -> {
       var dataSource = (DataSource) bean;
 
       if (!dataSource.isWrapperFor(SpyqlDataSource.class)) {
@@ -30,11 +30,10 @@ public abstract class BaseEntryPointsBeanProcessor implements BeanPostProcessor,
       }
 
       var spyqlDataSource = dataSource.unwrap(SpyqlDataSource.class);
-
       instrument(spyqlDataSource, spyqlDataSource.getDatabaseName());
-
-      return spyqlDataSource;
     });
+
+    return bean;
   }
 
   protected abstract void instrument(SpyqlDataSource spyqlDataSource, String databaseName);
