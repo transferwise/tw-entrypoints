@@ -19,8 +19,9 @@ public class SqlParserUtils {
       Pattern.LITERAL | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
   public Statements parseToStatements(String sql) throws ParseException {
-    // 99.99% of sqls don't have it, so let's avoid new string creation for those.
     var matcher = FUNCTION_REPLACEMENT_PATTERN.matcher(sql);
+
+    // 99.99% of sqls don't have it, so let's avoid new string creation for those.
     if (matcher.find()) {
       matcher.reset();
       sql = matcher.replaceAll(Matcher.quoteReplacement("UNSUPPORTED()"));
