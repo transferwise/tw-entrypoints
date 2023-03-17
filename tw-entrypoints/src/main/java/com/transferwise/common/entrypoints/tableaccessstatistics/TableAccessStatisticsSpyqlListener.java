@@ -33,7 +33,6 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +45,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_SIZE = "EntryPoints_Tas_SqlParseResultsCache_size";
 
   public static final String COUNTER_FAILED_PARSES = "EntryPoints_Tas_FailedParses";
+  public static final String COUNTER_UNCOUNTED_QUERIES = "EntryPoints_Tas_UncountedQueries";
   public static final String TIMER_FIRST_TABLE_ACCESS = "EntryPoints_Tas_FirstTableAccess";
   public static final String COUNTER_TABLE_ACCESS = "EntryPoints_Tas_TableAccess";
 
@@ -90,7 +90,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   protected SqlParseResult parseSql(String sql, TwContext context) {
     SqlParseResult result = new SqlParseResult();
     try {
-      Statements stmts = CCJSqlParserUtil.parseStatements(sql);
+      Statements stmts = SqlParserUtils.parseToStatements(sql);
+
       for (Statement stmt : stmts.getStatements()) {
         // Intern() makes later equal checks much faster.
         String opName = getOperationName(stmt).intern();
@@ -100,6 +101,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         SqlParseResult.SqlOperation sqlOp = result
             .getOperations()
             .computeIfAbsent(opName, k -> new SqlParseResult.SqlOperation());
+
         for (String tableName : tableNames) {
           // Intern() makes later equal checks much faster.
           sqlOp.getTableNames().add(tableName.intern());
@@ -114,6 +116,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       )).increment();
       log.debug(t.getMessage(), t);
     }
+
     return result;
   }
 
@@ -142,7 +145,13 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       SqlParseResult sqlParseResult = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
 
       if (sqlParseResult == null) {
-        // Already counted in failed parses.
+        meterCache.counter(COUNTER_UNCOUNTED_QUERIES, TagsSet.of(
+            EntryPointsMetrics.TAG_DATABASE, databaseName,
+            TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
+            TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
+            TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner()
+        )).increment();
+
         return;
       }
 
