@@ -98,6 +98,7 @@ public class DasUnknownCallsCollector implements GracefulShutdownStrategy {
 
   @Override
   public void applicationTerminating() {
+    log.info("Stopping collecting of DAS metrics for unknown calls.");
     taskHandle.stop();
   }
 }
