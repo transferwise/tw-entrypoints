@@ -19,11 +19,14 @@ dependencies {
     implementation libraries.twContextStarter
     implementation libraries.twSpyqlStarter
 
+    runtimeOnly libraries.twGracefulShutdown
+
     testImplementation libraries.caffeine
     testImplementation libraries.testContainersMariaDb
     testImplementation libraries.slf4jApi
     testImplementation libraries.springBootStarterJdbc
     testImplementation libraries.springBootStarterTest
+    testImplementation libraries.twGracefulShutdownInterfaces
 
     testRuntimeOnly libraries.flywayCore
     if (springBootVersion.startsWith("2.7")) {

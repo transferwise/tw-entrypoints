@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints.databaseaccessstatistics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import com.transferwise.common.context.TwContext;
 import com.transferwise.common.entrypoints.test.BaseIntTest;
@@ -18,24 +19,33 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
+class DatabaseAccessStatisticsIntTest extends BaseIntTest {
 
   @Autowired
   private DataSource dataSource;
+
+  @Autowired
+  private DasUnknownCallsCollector dasUnknownCallsCollector;
 
   private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   public void setup() {
+    // Resetting counters from Flyway executions.
+    dasUnknownCallsCollector.registerUnknownCalls();
+
     super.setup();
     jdbcTemplate = new JdbcTemplate(dataSource);
   }
 
   @Test
-  public void selectGetsRegisteredInAnEntryPoint() {
+  void selectGetsRegisteredInAnEntryPoint() {
     TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
       jdbcTemplate.queryForList("select id from table_a", Long.class);
     });
+
+    var dasUnknownCallsCollectorIterations = dasUnknownCallsCollector.getIterationsCount();
+    await().until(() -> dasUnknownCallsCollectorIterations < dasUnknownCallsCollector.getIterationsCount());
 
     Map<String, Meter> meters = metersAsMap();
 
@@ -57,15 +67,19 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
   }
 
   @Test
-  public void selectsGetsRegisteredOutsideOfAnEntrypoint() {
+  void selectsGetsRegisteredOutsideOfAnEntrypoint() {
     jdbcTemplate.queryForList("select id from table_a", Long.class);
 
     // Unknown context statistics will be converted to metrics on next entrypoints access.
     TwContext.current().createSubContext().asEntryPoint("group", "name").execute(() -> {
     });
 
+    var dasUnknownCallsCollectorIterations = dasUnknownCallsCollector.getIterationsCount();
+    await().until(() -> dasUnknownCallsCollectorIterations < dasUnknownCallsCollector.getIterationsCount());
+
     Map<String, Meter> meters = metersAsMap();
     assertThat(meters.get("Registered_NTQueries")).isNull();
+
     assertThat(((Counter) meters.get("Unknown_Commits")).count()).isEqualTo(0);
     assertThat(((Counter) meters.get("Unknown_NTQueries")).count()).isEqualTo(1);
     assertThat(((Counter) meters.get("Unknown_TQueries")).count()).isEqualTo(0);
@@ -74,7 +88,7 @@ public class DatabaseAccessStatisticsIntTest extends BaseIntTest {
   }
 
   @Test
-  public void rowsStatisticsAreGathered() {
+  void rowsStatisticsAreGathered() {
     TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
       for (int i = 0; i < 31; i++) {
         jdbcTemplate.update("insert into table_a (id, version) values (?,?)", i, 0);

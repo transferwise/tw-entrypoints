@@ -1,7 +1,6 @@
 package com.transferwise.common.entrypoints.test;
 
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
-import com.transferwise.common.context.TwContext;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +36,6 @@ public class BaseIntTest {
 
   @BeforeEach
   public void setup() {
-    // Resetting counters from Flyway executions.
-    TwContext.current().createSubContext().asEntryPoint("A", "B").execute(() -> {
-    });
     meterRegistry.getMeters().stream()
         .filter(m -> (m.getId().getName().startsWith("EntryPoints") || m.getId().getName().startsWith("database")) && !(m instanceof Gauge))
         .forEach(m -> {

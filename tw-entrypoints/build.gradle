@@ -17,6 +17,7 @@ dependencies {
     implementation libraries.slf4jApi
     implementation libraries.twBaseUtils
     implementation libraries.twSpyqlCore
+    implementation libraries.twGracefulShutdownInterfaces
 
     testImplementation libraries.junitJupiter
 

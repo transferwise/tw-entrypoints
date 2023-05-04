@@ -44,6 +44,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO = "EntryPoints_Tas_SqlParseResultsCache_hitRatio";
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_SIZE = "EntryPoints_Tas_SqlParseResultsCache_size";
 
+  public static final String COUNTER_PARSES = "EntryPoints_Tas_Parses";
   public static final String COUNTER_FAILED_PARSES = "EntryPoints_Tas_FailedParses";
   public static final String COUNTER_UNCOUNTED_QUERIES = "EntryPoints_Tas_UncountedQueries";
   public static final String TIMER_FIRST_TABLE_ACCESS = "EntryPoints_Tas_FirstTableAccess";
@@ -107,6 +108,12 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
           sqlOp.getTableNames().add(tableName.intern());
         }
       }
+      meterCache.counter(COUNTER_PARSES, TagsSet.of(
+          EntryPointsMetrics.TAG_DATABASE, databaseName,
+          TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
+          TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
+          TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner()
+      )).increment();
     } catch (Throwable t) {
       meterCache.counter(COUNTER_FAILED_PARSES, TagsSet.of(
           EntryPointsMetrics.TAG_DATABASE, databaseName,

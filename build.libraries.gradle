@@ -11,6 +11,8 @@ ext {
             twBaseUtils                     : "com.transferwise.common:tw-base-utils:1.9.0",
             twContext                       : "com.transferwise.common:tw-context:0.11.1",
             twContextStarter                : "com.transferwise.common:tw-context-starter:0.11.1",
+            twGracefulShutdown              : 'com.transferwise.common:tw-graceful-shutdown:2.8.0',
+            twGracefulShutdownInterfaces    : 'com.transferwise.common:tw-graceful-shutdown-interfaces:2.8.0',
             twSpyqlCore                     : "com.transferwise.common:tw-spyql-core:1.5.0",
             twSpyqlStarter                  : "com.transferwise.common:tw-spyql-starter:1.5.0",
 

@@ -5,6 +5,7 @@ import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.MeterCache;
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.entrypoints.databaseaccessstatistics.DasUnknownCallsCollector;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
@@ -74,5 +75,11 @@ public class EntryPointsAutoConfiguration {
   @ConditionalOnMissingBean(IMeterCache.class)
   public IMeterCache twDefaultMeterCache(MeterRegistry meterRegistry) {
     return new MeterCache(meterRegistry);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean(DasUnknownCallsCollector.class)
+  public DasUnknownCallsCollector unknownCallsCollector(IExecutorServicesProvider executorServicesProvider, IMeterCache meterCache) {
+    return new DasUnknownCallsCollector(executorServicesProvider, meterCache);
   }
 }
