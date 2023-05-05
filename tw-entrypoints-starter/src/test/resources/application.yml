@@ -7,6 +7,10 @@ tw-entrypoints:
     sql-parser:
       cache-size-mib: 1
 
+tw-graceful-shutdown:
+  clients-reaction-time-ms: 100
+  strategies-check-interval-time-ms: 100
+
 ---
 spring:
   config:
