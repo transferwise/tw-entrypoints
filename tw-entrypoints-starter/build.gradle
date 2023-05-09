@@ -29,7 +29,7 @@ dependencies {
     testImplementation libraries.twGracefulShutdownInterfaces
 
     testRuntimeOnly libraries.flywayCore
-    if (springBootVersion.startsWith("2.7")) {
+    if (springBootVersion.startsWith("2.7") || springBootVersion.startsWith("3.")) {
         testRuntimeOnly libraries.flywayMysql
     }
     testRuntimeOnly libraries.mariadbJavaClient
