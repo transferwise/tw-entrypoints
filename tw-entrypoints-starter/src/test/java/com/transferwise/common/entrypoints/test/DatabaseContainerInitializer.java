@@ -23,7 +23,7 @@ public class DatabaseContainerInitializer implements ApplicationContextInitializ
   }
 
   private MariaDBContainer<? extends MariaDBContainer> startMariaDbTestContainer() {
-    MariaDBContainer<? extends MariaDBContainer> mySqlContainer = new MariaDBContainer<>()
+    MariaDBContainer<? extends MariaDBContainer> mySqlContainer = new MariaDBContainer<>("mariadb:10.6")
         .withDatabaseName("mydb")
         .withPassword("q1w2e3r4");
 

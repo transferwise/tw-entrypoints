@@ -47,14 +47,24 @@ configurations {
 }
 
 dependencies {
-    local platform(libraries.springBootDependencies + '!!')
-    local libraries.lombok
-    local libraries.spotbugsAnnotations
+    local platform(libraries.springBootDependencies)
+
+    compileOnly libraries.lombok
+    annotationProcessor libraries.lombok
+    testCompileOnly libraries.lombok
+    testAnnotationProcessor libraries.lombok
+
+    compileOnly libraries.spotbugsAnnotations
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    if (springBootVersion.startsWith("3.")) {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    } else {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
     withSourcesJar()
     withJavadocJar()
 }
@@ -78,7 +88,11 @@ compileJava {
     options.forkOptions.jvmArgs << '-Xmx256m'
 
     javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(11)
+        if (springBootVersion.startsWith("3.")) {
+            languageVersion = JavaLanguageVersion.of(17)
+        } else {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
     }
 }
 
