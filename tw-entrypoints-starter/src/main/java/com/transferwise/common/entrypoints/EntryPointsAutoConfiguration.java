@@ -9,12 +9,17 @@ import com.transferwise.common.entrypoints.databaseaccessstatistics.DasUnknownCa
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTableAccessStatisticsParsedQueryRegistry;
+import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasSqlFilter;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsParsedQueryRegistry;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasSqlFilter;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +27,7 @@ import org.springframework.context.annotation.Configuration;
 public class EntryPointsAutoConfiguration {
 
   @Bean
+  @ConfigurationProperties(value = "tw-entrypoints", ignoreUnknownFields = false)
   public EntryPointsProperties twEntryPointsProperties() {
     return new EntryPointsProperties();
   }
@@ -47,6 +53,20 @@ public class EntryPointsAutoConfiguration {
   @ConditionalOnMissingBean
   public TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean(TableAccessStatisticsParsedQueryRegistry.class)
+  public DefaultTableAccessStatisticsParsedQueryRegistry twEntryPointsTableAccessStatisticsParsedQueryRegistry() {
+    return new DefaultTableAccessStatisticsParsedQueryRegistry();
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean(TasSqlFilter.class)
+  public DefaultTasSqlFilter twEntryPointsTableAccessStatisticsSqlFilter() {
+    return new DefaultTasSqlFilter();
   }
 
   @Bean
@@ -82,4 +102,5 @@ public class EntryPointsAutoConfiguration {
   public DasUnknownCallsCollector unknownCallsCollector(IExecutorServicesProvider executorServicesProvider, IMeterCache meterCache) {
     return new DasUnknownCallsCollector(executorServicesProvider, meterCache);
   }
+
 }

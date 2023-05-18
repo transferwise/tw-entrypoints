@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0] - 2023-05-18
+
+### Changed
+
+* Implemented a timeout and interruption for TAS SQL parsing.
+  Complex queries in one of our services created long duration heavy CPU burn.
+
+* Query parsing will use complex parsing immediately.
+  Performance tests show using simple parsing first does not improve the performance much.
+
+* Created a mechanism for a service to provide parsed query information itself and thus skip the query parsing.
+  It can be used for complex queries where parsing is slow or for queries which jsqlparser can not handle.
+  The mechanism can be used via `TableAccessStatisticsParsedQueryRegistry` interface.
+
 ## [2.10.0] - 2023-05-09
 
 ### Added

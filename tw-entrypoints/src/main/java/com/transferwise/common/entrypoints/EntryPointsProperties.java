@@ -1,10 +1,9 @@
 package com.transferwise.common.entrypoints;
 
+import java.time.Duration;
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties(value = "tw-entrypoints", ignoreUnknownFields = false)
 public class EntryPointsProperties {
 
   private Das das = new Das();
@@ -34,6 +33,11 @@ public class EntryPointsProperties {
     public static class SqlParser {
 
       private int cacheSizeMib = 50;
+      private Duration timeout = Duration.ofSeconds(5);
+      /**
+       * If parsing takes longer than that, the service owner would want to know about it.
+       */
+      private Duration parseDurationWarnThreshold = Duration.ofSeconds(1);
     }
   }
 
