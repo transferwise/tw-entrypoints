@@ -21,8 +21,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   It can be used for complex queries where parsing is slow or for queries which jsqlparser can not handle.
   The mechanism can be used via `TableAccessStatisticsParsedQueryRegistry` interface.
 
-* Provided `TasSqlFilter`, which allows to skip specific queries, which the Jsqlparser can not handle, and which
-  do not contain any tables anyway. E.g. "SET statement_timeout TO".
+* Added more flexibility around query parsing via `TasQueryParsingListener` and `TasQueryParsingInterceptor`.
 
 * Supporting parsing queries with `on conflict (...)` clause with multiple parameters.
   We can remove our own solution, when next `JSQLParser` version would support it.
