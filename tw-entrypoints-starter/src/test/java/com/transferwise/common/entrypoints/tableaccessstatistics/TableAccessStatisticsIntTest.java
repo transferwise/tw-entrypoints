@@ -23,10 +23,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class TableAccessStatisticsIntTest extends BaseIntTest {
 
   @Autowired
+  private TestTasQueryParsingInterceptor testTasQueryParsingInterceptor;
+
+  @Autowired
   private DataSource dataSource;
 
   @Autowired
-  private DefaultTableAccessStatisticsParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry;
+  private DefaultTasParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry;
 
   private JdbcTemplate jdbcTemplate;
 
@@ -35,6 +38,7 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
     super.setup();
     jdbcTemplate = new JdbcTemplate(dataSource);
     invalidateParserCache();
+    testTasQueryParsingInterceptor.setParsedQuery(null);
   }
 
   @Test
@@ -101,6 +105,30 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
 
     assertThat(firstTableAccessMeter.getId().getTag("operation")).isEqualTo("upsert");
     assertThat(firstTableAccessMeter.getId().getTag("table")).isEqualTo("my_custom_table");
+  }
+
+  @Test
+  void interceptorCanProvideItsOwnParsedQuery() {
+    testTasQueryParsingInterceptor.setParsedQuery(new ParsedQuery().addOperation("insert",
+        new SqlOperation().addTable("my_custom_table123")));
+
+    String sql = "select id from not_existing_table limit 1234";
+
+    TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
+      try {
+        jdbcTemplate.queryForObject(sql, Long.class);
+      } catch (Exception ignored) {
+        //ignored
+      }
+    });
+
+    List<Meter> meters = getTableAccessMeters();
+
+    assertThat(meters.size()).isEqualTo(1);
+    var counter = (Counter) meters.get(0);
+
+    assertThat(counter.getId().getTag("operation")).isEqualTo("insert");
+    assertThat(counter.getId().getTag("table")).isEqualTo("my_custom_table123");
   }
 
   @Test

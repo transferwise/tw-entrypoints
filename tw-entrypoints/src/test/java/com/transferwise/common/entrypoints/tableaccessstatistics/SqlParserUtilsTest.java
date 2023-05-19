@@ -15,6 +15,8 @@ class SqlParserUtilsTest {
   void testJSqlParser() {
     List<String> sqls = new ArrayList<>();
 
+    sqls.add("insert into fin_unique_tw_task_key(task_id,key_hash,key) values(?, ?, ?) on conflict (key_hash, key) do nothing");
+
     // DATABASE is a keyword for sql parser.
     sqls.add("select DATABASE()");
 
@@ -24,13 +26,17 @@ class SqlParserUtilsTest {
     sqls.add("SHOW FULL TABLES IN fx WHERE TABLE_TYPE NOT LIKE 'VIEW'");
 
     // Skipped by SqlFilter, because sqlparser can not handle this.
-    sqls.add("SET statement_timeout TO '18000'");
+    // sqls.add("SET statement_timeout TO '18000'");
+
+    sqls.add("insert into fin_unique_tw_task_key(task_id,key_hash,key) values(?, ?, ?) on conflict (key_hash, key) do nothing");
 
     var sqlParser = new SqlParser(Executors.newCachedThreadPool());
 
     for (String sql : sqls) {
       try {
-        sqlParser.parse(sql, Duration.ofSeconds(5));
+        var statements = sqlParser.parse(sql, Duration.ofSeconds(5));
+
+        statements.getStatements();
       } catch (JSQLParserException e) {
         throw new RuntimeException("Failed to parse sql '" + sql + "'.", e);
       }

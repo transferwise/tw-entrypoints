@@ -59,6 +59,17 @@ You would need to add a dependency for this as well:
 testImplementation "com.transferwise.common:tw-entrypoints"
 ```
 
+## Table access statistics and `JSqlParser` library
+
+We are using (JSqlParser)[https://github.com/JSQLParser/JSqlParser] library to parse table names from queries.
+
+The library is pretty good, but some services have few queries, it can not parse. Also, sometimes the parsing can take so long,
+that it will create latency spikes or cpu burns.
+
+In those case, you can override/control the parsing via `TasQueryParsingInterceptor` and `TasParsedQueryRegistry`.
+
+In case where failed parsing will create too much logs noise, you have an option to override `TasQueryParsingListener`.
+
 ## License
 
 Copyright 2021 TransferWise Ltd.

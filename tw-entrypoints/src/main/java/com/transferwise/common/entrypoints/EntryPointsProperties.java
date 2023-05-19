@@ -38,6 +38,7 @@ public class EntryPointsProperties {
        * If parsing takes longer than that, the service owner would want to know about it.
        */
       private Duration parseDurationWarnThreshold = Duration.ofSeconds(1);
+      private boolean warnAboutFailedParses = true;
     }
   }
 

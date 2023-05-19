@@ -10,5 +10,3 @@
 Provides various metrics for service's databases usage.
 
 Reference the [documentation](docs/index.md) of the library for more information about adoption and features.
-
-

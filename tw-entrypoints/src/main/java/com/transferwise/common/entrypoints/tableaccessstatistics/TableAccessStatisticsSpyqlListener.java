@@ -14,6 +14,7 @@ import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import com.transferwise.common.entrypoints.EntryPointsProperties;
 import com.transferwise.common.entrypoints.tableaccessstatistics.ParsedQuery.SqlOperation;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor.InterceptResult.Decision;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
 import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
@@ -22,6 +23,10 @@ import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -59,21 +64,24 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
   final LoadingCache<String, ParsedQuery> sqlParseResultsCache;
 
-  private final TableAccessStatisticsParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry;
+  private final TasParsedQueryRegistry tasParsedQueryRegistry;
   private final SqlParser sqlParser;
   private final EntryPointsProperties entryPointsProperties;
-  private final TasSqlFilter sqlFilter;
+  private final TasQueryParsingListener tasQueryParsingListener;
+  private final TasQueryParsingInterceptor tasQueryParsingInterceptor;
 
   public TableAccessStatisticsSpyqlListener(IMeterCache meterCache, ExecutorService executorService,
-      TableAccessStatisticsParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry, String databaseName,
-      EntryPointsProperties entryPointsProperties, TasSqlFilter sqlFilter) {
+      TasParsedQueryRegistry tasParsedQueryRegistry, String databaseName,
+      EntryPointsProperties entryPointsProperties, TasQueryParsingListener tasQueryParsingListener,
+      TasQueryParsingInterceptor tasQueryParsingInterceptor) {
     this.databaseName = databaseName;
     this.dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
     this.meterCache = meterCache;
-    this.tableAccessStatisticsParsedQueryRegistry = tableAccessStatisticsParsedQueryRegistry;
+    this.tasParsedQueryRegistry = tasParsedQueryRegistry;
     this.sqlParser = new SqlParser(executorService);
     this.entryPointsProperties = entryPointsProperties;
-    this.sqlFilter = sqlFilter;
+    this.tasQueryParsingInterceptor = tasQueryParsingInterceptor;
+    this.tasQueryParsingListener = tasQueryParsingListener;
 
     MeterRegistry meterRegistry = meterCache.getMeterRegistry();
     meterRegistry.config().meterFilter(new TasMeterFilter());
@@ -82,6 +90,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         .executor(executorService)
         .weigher((String k, ParsedQuery v) -> k.length() * 2)
         .build(sql -> parseSql(sql, TwContext.current()));
+
+    new CaffeineCacheMetrics<>(sqlParseResultsCache, "ep-tas-parse-results", Collections.emptyList()).bindTo(meterRegistry);
 
     Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).register(meterRegistry);
     Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
@@ -97,10 +107,6 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     ParsedQuery result = new ParsedQuery();
     long startTimeMs = System.currentTimeMillis();
     try {
-      if (sqlFilter.skip(sql)) {
-        return result;
-      }
-
       var stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
 
       for (Statement stmt : stmts.getStatements()) {
@@ -134,6 +140,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
           TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
           TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner()
       )).increment();
+
+      tasQueryParsingListener.parsingDone(sql, result, Duration.of(System.currentTimeMillis() - startTimeMs, ChronoUnit.MILLIS));
     } catch (Throwable t) {
       meterCache.counter(COUNTER_FAILED_PARSES, TagsSet.of(
           EntryPointsMetrics.TAG_DATABASE, databaseName,
@@ -141,17 +149,10 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
           TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
           TwContextMetricsTemplate.TAG_EP_OWNER, context.getOwner()
       )).increment();
-
-      // If we log this as error or even as info, we will already create spam for many Flyway queries.
-      log.debug("Parsing statement '{}' failed. You can use `TableAccessStatisticsParsedQueryRegistry` to register the query parse result manually.",
-          sql, t);
+      tasQueryParsingListener.parsingFailed(sql, Duration.of(System.currentTimeMillis() - startTimeMs, ChronoUnit.MILLIS), t);
     } finally {
       long durationMs = System.currentTimeMillis() - startTimeMs;
       if (durationMs > entryPointsProperties.getTas().getSqlParser().getParseDurationWarnThreshold().toMillis()) {
-        log.warn(
-            "Statement '{}' parsing took {} ms. You may want to use `TableAccessStatisticsParsedQueryRegistry` to register the"
-                + " query parse result manually. ");
-
         meterCache.counter(COUNTER_SLOW_PARSES, TagsSet.of(
             EntryPointsMetrics.TAG_DATABASE, databaseName,
             TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
@@ -186,9 +187,16 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
       final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
-      var parsedQuery = tableAccessStatisticsParsedQueryRegistry.get(sql);
-      if (parsedQuery == null) {
-        parsedQuery = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
+      ParsedQuery parsedQuery = null;
+
+      var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+      if (interceptResult.getDecision() == Decision.CONTINUE) {
+        parsedQuery = tasParsedQueryRegistry.get(sql);
+        if (parsedQuery == null) {
+          parsedQuery = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
+        }
+      } else if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
+        parsedQuery = interceptResult.getParsedQuery();
       }
 
       if (parsedQuery == null) {

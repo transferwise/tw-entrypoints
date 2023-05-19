@@ -1,6 +1,7 @@
 package com.transferwise.common.entrypoints.test;
 
 import com.transferwise.common.baseutils.transactionsmanagement.TransactionsHelper;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TestTasQueryParsingInterceptor;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -36,5 +37,10 @@ public class TestApplication {
   @Bean
   public TransactionsHelper transactionsHelper() {
     return new TransactionsHelper();
+  }
+
+  @Bean
+  public TestTasQueryParsingInterceptor testTasQueryParsingInterceptor() {
+    return new TestTasQueryParsingInterceptor();
   }
 }

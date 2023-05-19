@@ -6,7 +6,6 @@ import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.entrypoints.BaseEntryPointsBeanProcessor;
 import com.transferwise.common.entrypoints.EntryPointsProperties;
 import com.transferwise.common.spyql.SpyqlDataSource;
-import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.BeanFactory;
 
 public class TableAccessStatisticsBeanPostProcessor extends BaseEntryPointsBeanProcessor {
@@ -26,16 +25,19 @@ public class TableAccessStatisticsBeanPostProcessor extends BaseEntryPointsBeanP
       return;
     }
 
-    EntryPointsProperties entryPointsProperties = beanFactory.getBean(EntryPointsProperties.class);
-    IMeterCache meterCache = beanFactory.getBean(IMeterCache.class);
-    ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
+    var entryPointsProperties = beanFactory.getBean(EntryPointsProperties.class);
+    var meterCache = beanFactory.getBean(IMeterCache.class);
+    var executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
         .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
 
-    TableAccessStatisticsParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry = beanFactory.getBean(
-        TableAccessStatisticsParsedQueryRegistry.class);
+    var tableAccessStatisticsParsedQueryRegistry = beanFactory.getBean(
+        TasParsedQueryRegistry.class);
+
+    var tasQueryParsingInterceptor = beanFactory.getBean(TasQueryParsingInterceptor.class);
+    var tasQueryParsingListener = beanFactory.getBean(TasQueryParsingListener.class);
 
     spyqlDataSource.addListener(
         new TableAccessStatisticsSpyqlListener(meterCache, executorService, tableAccessStatisticsParsedQueryRegistry, databaseName,
-            entryPointsProperties));
+            entryPointsProperties, tasQueryParsingListener, tasQueryParsingInterceptor));
   }
 }

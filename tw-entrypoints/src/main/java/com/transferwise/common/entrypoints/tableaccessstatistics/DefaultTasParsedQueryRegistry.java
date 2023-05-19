@@ -3,7 +3,7 @@ package com.transferwise.common.entrypoints.tableaccessstatistics;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DefaultTableAccessStatisticsParsedQueryRegistry implements TableAccessStatisticsParsedQueryRegistry {
+public class DefaultTasParsedQueryRegistry implements TasParsedQueryRegistry {
 
   private final Map<String, ParsedQuery> sqlParseResults = new ConcurrentHashMap<>();
 
