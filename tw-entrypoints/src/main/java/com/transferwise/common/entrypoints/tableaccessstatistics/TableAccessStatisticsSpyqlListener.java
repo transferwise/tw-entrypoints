@@ -39,6 +39,8 @@ import org.apache.commons.lang3.StringUtils;
 public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListener {
 
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_HIT_COUNT = "EntryPoints_Tas_SqlParseResultsCache_hitCount";
+  public static final String GAUGE_SQL_PARSER_RESULT_CACHE_MISS_COUNT = "EntryPoints_Tas_SqlParseResultsCache_missCount";
+  public static final String GAUGE_SQL_PARSER_RESULT_CACHE_EVICT_COUNT = "EntryPoints_Tas_SqlParseResultsCache_evictCount";
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO = "EntryPoints_Tas_SqlParseResultsCache_hitRatio";
   public static final String GAUGE_SQL_PARSER_RESULT_CACHE_SIZE = "EntryPoints_Tas_SqlParseResultsCache_size";
 
@@ -91,11 +93,18 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         .weigher((String k, ParsedQuery v) -> k.length() * 2)
         .build(sql -> parseSql(sql, TwContext.current()));
 
-    new CaffeineCacheMetrics<>(sqlParseResultsCache, "ep-tas-parse-results", Collections.emptyList()).bindTo(meterRegistry);
+    new CaffeineCacheMetrics<>(sqlParseResultsCache, "ep-tas-parse-results-" + databaseName, Collections.emptyList()).bindTo(meterRegistry);
 
-    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).register(meterRegistry);
-    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).register(meterRegistry);
-    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_COUNT, () -> sqlParseResultsCache.stats().hitCount()).register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_SIZE, sqlParseResultsCache::estimatedSize).tag("database", databaseName)
+        .register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_RATIO, () -> sqlParseResultsCache.stats().hitRate()).tag("database", databaseName)
+        .register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_HIT_COUNT, () -> sqlParseResultsCache.stats().hitCount()).tag("database", databaseName)
+        .register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_MISS_COUNT, () -> sqlParseResultsCache.stats().missCount()).tag("database", databaseName)
+        .register(meterRegistry);
+    Gauge.builder(GAUGE_SQL_PARSER_RESULT_CACHE_EVICT_COUNT, () -> sqlParseResultsCache.stats().evictionCount()).tag("database", databaseName)
+        .register(meterRegistry);
   }
 
   @Override
