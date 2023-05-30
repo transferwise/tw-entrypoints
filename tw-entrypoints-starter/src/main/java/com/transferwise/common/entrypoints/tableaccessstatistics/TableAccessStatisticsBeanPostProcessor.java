@@ -4,15 +4,11 @@ import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.concurrency.ThreadNamingExecutorServiceWrapper;
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.entrypoints.BaseEntryPointsBeanProcessor;
+import com.transferwise.common.entrypoints.EntryPointsProperties;
 import com.transferwise.common.spyql.SpyqlDataSource;
-import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 public class TableAccessStatisticsBeanPostProcessor extends BaseEntryPointsBeanProcessor {
-
-  @Value("${tw-entrypoints.tas.sql-parser.cache-size-mib:50}")
-  private int sqlParserCacheSizeMib;
 
   private final BeanFactory beanFactory;
 
@@ -23,17 +19,25 @@ public class TableAccessStatisticsBeanPostProcessor extends BaseEntryPointsBeanP
   @Override
   protected void instrument(SpyqlDataSource spyqlDataSource, String databaseName) {
     boolean isAlreadyAttached = spyqlDataSource.getDataSourceListeners().stream().anyMatch(
-        l -> l instanceof TableAccessStatisticsSpyqlListener);
+        TableAccessStatisticsSpyqlListener.class::isInstance);
 
     if (isAlreadyAttached) {
       return;
     }
 
-    IMeterCache meterCache = beanFactory.getBean(IMeterCache.class);
-    ExecutorService executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
+    var entryPointsProperties = beanFactory.getBean(EntryPointsProperties.class);
+    var meterCache = beanFactory.getBean(IMeterCache.class);
+    var executorService = new ThreadNamingExecutorServiceWrapper("eptas", beanFactory
         .getBean(IExecutorServicesProvider.class).getGlobalExecutorService());
 
+    var tableAccessStatisticsParsedQueryRegistry = beanFactory.getBean(
+        TasParsedQueryRegistry.class);
+
+    var tasQueryParsingInterceptor = beanFactory.getBean(TasQueryParsingInterceptor.class);
+    var tasQueryParsingListener = beanFactory.getBean(TasQueryParsingListener.class);
+
     spyqlDataSource.addListener(
-        new TableAccessStatisticsSpyqlListener(meterCache, executorService, databaseName, sqlParserCacheSizeMib));
+        new TableAccessStatisticsSpyqlListener(meterCache, executorService, tableAccessStatisticsParsedQueryRegistry, databaseName,
+            entryPointsProperties, tasQueryParsingListener, tasQueryParsingInterceptor));
   }
 }

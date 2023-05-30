@@ -9,12 +9,19 @@ import com.transferwise.common.entrypoints.databaseaccessstatistics.DasUnknownCa
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasParsedQueryRegistry;
+import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingInterceptor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingListener;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryRegistry;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 public class EntryPointsAutoConfiguration {
 
   @Bean
+  @ConfigurationProperties(value = "tw-entrypoints", ignoreUnknownFields = false)
   public EntryPointsProperties twEntryPointsProperties() {
     return new EntryPointsProperties();
   }
@@ -47,6 +55,27 @@ public class EntryPointsAutoConfiguration {
   @ConditionalOnMissingBean
   public TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean(TasParsedQueryRegistry.class)
+  public DefaultTasParsedQueryRegistry twEntryPointsTableAccessStatisticsParsedQueryRegistry() {
+    return new DefaultTasParsedQueryRegistry();
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean(TasQueryParsingInterceptor.class)
+  public DefaultTasQueryParsingInterceptor twEntryPointsTableAccessStatisticsQueryParsingInterceptor() {
+    return new DefaultTasQueryParsingInterceptor();
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean(TasQueryParsingListener.class)
+  public DefaultTasQueryParsingListener twEntryPointsTableAccessStatisticsQueryParsingListener(EntryPointsProperties entryPointsProperties) {
+    return new DefaultTasQueryParsingListener(entryPointsProperties);
   }
 
   @Bean

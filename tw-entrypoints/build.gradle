@@ -20,5 +20,6 @@ dependencies {
     implementation libraries.twGracefulShutdownInterfaces
 
     testImplementation libraries.junitJupiter
-
 }
+
+apply from: "build-idea-fix.gradle.kts"

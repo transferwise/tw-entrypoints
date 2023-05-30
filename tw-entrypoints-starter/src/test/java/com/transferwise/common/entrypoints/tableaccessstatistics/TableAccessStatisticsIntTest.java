@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.transferwise.common.baseutils.ExceptionUtils;
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.entrypoints.tableaccessstatistics.ParsedQuery.SqlOperation;
 import com.transferwise.common.entrypoints.test.BaseIntTest;
 import com.transferwise.common.spyql.SpyqlDataSource;
 import io.micrometer.core.instrument.Counter;
@@ -19,10 +20,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class TableAccessStatisticsIntTest extends BaseIntTest {
+class TableAccessStatisticsIntTest extends BaseIntTest {
+
+  @Autowired
+  private TestTasQueryParsingInterceptor testTasQueryParsingInterceptor;
 
   @Autowired
   private DataSource dataSource;
+
+  @Autowired
+  private DefaultTasParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry;
 
   private JdbcTemplate jdbcTemplate;
 
@@ -31,10 +38,11 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     super.setup();
     jdbcTemplate = new JdbcTemplate(dataSource);
     invalidateParserCache();
+    testTasQueryParsingInterceptor.setParsedQuery(null);
   }
 
   @Test
-  public void selectToNotExistingTableGetsCorrectlyRegistered() {
+  void selectToNotExistingTableGetsCorrectlyRegistered() {
     TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
       try {
         jdbcTemplate.queryForObject("select id from not_existing_table", Long.class);
@@ -69,6 +77,58 @@ public class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(firstTableAccessMeter.getId().getTag("epOwner")).isEqualTo("Generic");
     assertThat(firstTableAccessMeter.count()).isEqualTo(1);
     assertThat(firstTableAccessMeter.mean(TimeUnit.NANOSECONDS)).isGreaterThan(0);
+  }
+
+  @Test
+  void parsedQueryRegistryCanOverrideParsing() {
+    String sql = "select id from not_existing_table limit 1234";
+
+    tableAccessStatisticsParsedQueryRegistry.register(sql, new ParsedQuery().addOperation("upsert", new SqlOperation().addTable("my_custom_table")));
+
+    TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
+      try {
+        jdbcTemplate.queryForObject("select id from not_existing_table limit 1234", Long.class);
+      } catch (Exception ignored) {
+        //ignored
+      }
+    });
+
+    List<Meter> meters = getTableAccessMeters();
+
+    assertThat(meters.size()).isEqualTo(1);
+    var counter = (Counter) meters.get(0);
+
+    assertThat(counter.getId().getTag("operation")).isEqualTo("upsert");
+    assertThat(counter.getId().getTag("table")).isEqualTo("my_custom_table");
+
+    var firstTableAccessMeter = (Timer) getMeter("EntryPoints_Tas_FirstTableAccess");
+
+    assertThat(firstTableAccessMeter.getId().getTag("operation")).isEqualTo("upsert");
+    assertThat(firstTableAccessMeter.getId().getTag("table")).isEqualTo("my_custom_table");
+  }
+
+  @Test
+  void interceptorCanProvideItsOwnParsedQuery() {
+    testTasQueryParsingInterceptor.setParsedQuery(new ParsedQuery().addOperation("insert",
+        new SqlOperation().addTable("my_custom_table123")));
+
+    String sql = "select id from not_existing_table limit 1234";
+
+    TwContext.current().createSubContext().asEntryPoint("Test", "myEntryPoint").execute(() -> {
+      try {
+        jdbcTemplate.queryForObject(sql, Long.class);
+      } catch (Exception ignored) {
+        //ignored
+      }
+    });
+
+    List<Meter> meters = getTableAccessMeters();
+
+    assertThat(meters.size()).isEqualTo(1);
+    var counter = (Counter) meters.get(0);
+
+    assertThat(counter.getId().getTag("operation")).isEqualTo("insert");
+    assertThat(counter.getId().getTag("table")).isEqualTo("my_custom_table123");
   }
 
   @Test
