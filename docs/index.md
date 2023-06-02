@@ -60,7 +60,7 @@ testImplementation "com.transferwise.common:tw-entrypoints"
 
 ## Table access statistics and `JSqlParser` library
 
-We are using (JSqlParser)[https://github.com/JSQLParser/JSqlParser] library to parse table names from queries.
+We are using [JSqlParser](https://github.com/JSQLParser/JSqlParser) library to parse table names from queries.
 
 The library is pretty good, but some services have few queries, it can not parse. Also, sometimes the parsing can take so long,
 that it will create latency spikes or cpu burns.
