@@ -11,7 +11,7 @@ public class DefaultTasQueryParsingListener implements TasQueryParsingListener {
       + "or provide `DefaultTasQueryParsingInterceptor` implementation to provide the "
       + "query parse result manually.";
   public static final String FAILED_PARSING_LOG_MESSAGE = "Parsing statement '{}' failed." + FAILED_PARSING_SUGGESTION;
-  public static final String SLOW_PARSING_LOG_MESSAGE = "Statement '{}' parsing took {} ms." + FAILED_PARSING_LOG_MESSAGE;
+  public static final String SLOW_PARSING_LOG_MESSAGE = "Statement '{}' parsing took {} ms." + FAILED_PARSING_SUGGESTION;
 
 
   private EntryPointsProperties entryPointsProperties;
