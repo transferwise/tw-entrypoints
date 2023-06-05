@@ -15,9 +15,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 class TableAccessStatisticsIntTest extends BaseIntTest {
@@ -31,6 +33,9 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
   @Autowired
   private DefaultTasParsedQueryRegistry tableAccessStatisticsParsedQueryRegistry;
 
+  @Autowired
+  private TasFlywayConfigurationCustomizer tasFlywayConfigurationCustomizer;
+
   private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
@@ -39,6 +44,12 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
     jdbcTemplate = new JdbcTemplate(dataSource);
     invalidateParserCache();
     testTasQueryParsingInterceptor.setParsedQuery(null);
+  }
+
+  @Test
+  void flywayCustomizerWasApplied() {
+    Assertions.assertTrue(tasFlywayConfigurationCustomizer.queryParsingWasEnabled);
+    Assertions.assertTrue(tasFlywayConfigurationCustomizer.queryParsingWasDisabled);
   }
 
   @Test
@@ -179,6 +190,35 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(3);
 
     assertThat(((Gauge) getMeter("EntryPoints_Tas_SqlParseResultsCache_size")).value()).isEqualTo(1);
+  }
+
+  @Test
+  void failedSqlParsesGetRegistered() {
+    try {
+      jdbcTemplate.update("alter update blah");
+    } catch (BadSqlGrammarException ignored) {
+      //ignored
+    }
+
+    assertThat(getCounter("EntryPoints_Tas_FailedParses").count()).isEqualTo(1);
+  }
+
+  @Test
+  void queryParsingCanBeDisabled() {
+    TwContext.current().createSubContext().execute(() -> {
+      TasUtils.disableQueryParsing(TwContext.current());
+      try {
+        jdbcTemplate.update("alter update create blah");
+      } catch (BadSqlGrammarException ignored) {
+        // ignored
+      }
+    });
+
+    assertThat(getCounter("EntryPoints_Tas_FailedParses")).isNull();
+  }
+
+  private Counter getCounter(String name) {
+    return (Counter) getMeter(name);
   }
 
   private Meter getMeter(String name) {

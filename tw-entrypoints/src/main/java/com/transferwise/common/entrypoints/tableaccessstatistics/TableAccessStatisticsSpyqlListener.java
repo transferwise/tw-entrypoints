@@ -113,6 +113,13 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   }
 
   protected ParsedQuery parseSql(String sql, TwContext context) {
+    var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+    if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
+      return interceptResult.getParsedQuery();
+    } else if (interceptResult.getDecision() == Decision.SKIP) {
+      return new ParsedQuery();
+    }
+
     ParsedQuery result = new ParsedQuery();
     long startTimeMs = System.currentTimeMillis();
     try {
@@ -196,19 +203,20 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
       final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
-      ParsedQuery parsedQuery = null;
-
-      var interceptResult = tasQueryParsingInterceptor.intercept(sql);
-      if (interceptResult.getDecision() == Decision.CONTINUE) {
-        parsedQuery = tasParsedQueryRegistry.get(sql);
-        if (parsedQuery == null) {
-          parsedQuery = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
-        }
-      } else if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
-        parsedQuery = interceptResult.getParsedQuery();
-      }
+      ParsedQuery parsedQuery = tasParsedQueryRegistry.get(sql);
 
       if (parsedQuery == null) {
+        if (TasUtils.isQueryParsingEnabled(TwContext.current())) {
+          parsedQuery = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
+        } else {
+          var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+          if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
+            parsedQuery = interceptResult.getParsedQuery();
+          }
+        }
+      }
+
+      if (parsedQuery == null || parsedQuery.getOperations().isEmpty()) {
         meterCache.counter(COUNTER_UNCOUNTED_QUERIES, TagsSet.of(
             EntryPointsMetrics.TAG_DATABASE, databaseName,
             TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),

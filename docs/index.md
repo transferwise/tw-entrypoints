@@ -127,6 +127,40 @@ public class MyTasQueryParsingListener extends DefaultTasQueryParsingListener {
 }
 ```
 
+The library is automatically disabling query parsing during Flyway migration, but only when you use Spring Boot autoconfiguration to setup Flyway.
+
+If you create the Flyway bean manually, then run the `FluentConfiguration` through flyway customizers.
+
+For example.
+
+<!-- @formatter:off -->
+```java
+@Bean
+Flyway flyway(@Qualifier("dataSource") DataSource dataSource, List<FlywayConfigurationCustomizer> flywayConfigurationCustomizers) {
+    FluentConfiguration config = Flyway.configure()... ;
+
+    for (var flywayConfigurationCustomizer : flywayConfigurationCustomizers){
+        flywayConfigurationCustomizer.customize(config);
+    }
+
+    return new Flyway(config);
+}
+```
+<!-- @formatter:on -->
+
+When you would need to disable the query parsing for specific queries, or routine, surround those with `TwContext` and use `TasUtils`.
+
+E.g.
+
+<!-- @formatter:off -->
+```java
+TwContext.current().createSubContext().execute(() -> {
+  TasUtils.disableQueryParsing(TwContext.current());
+  jdbcTemplate.update("alter update create blah");
+});
+```
+<!-- @formatter:on -->
+
 ## License
 
 Copyright 2021 TransferWise Ltd.
