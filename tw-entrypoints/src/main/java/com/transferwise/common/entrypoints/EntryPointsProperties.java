@@ -28,6 +28,7 @@ public class EntryPointsProperties {
 
     private boolean enabled = true;
     private SqlParser sqlParser = new SqlParser();
+    private FlywayIntegration flywayIntegration = new FlywayIntegration();
 
     @Data
     public static class SqlParser {
@@ -39,6 +40,12 @@ public class EntryPointsProperties {
        */
       private Duration parseDurationWarnThreshold = Duration.ofSeconds(1);
       private boolean warnAboutFailedParses = true;
+    }
+
+    @Data
+    public static class FlywayIntegration {
+
+      private boolean enabled = true;
     }
   }
 

@@ -1,5 +1,6 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor.InterceptResult.Decision;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,15 +26,21 @@ class SqlParserUtilsTest {
 
     sqls.add("SHOW FULL TABLES IN fx WHERE TABLE_TYPE NOT LIKE 'VIEW'");
 
-    // Skipped by SqlFilter, because sqlparser can not handle this.
-    // sqls.add("SET statement_timeout TO '18000'");
+    sqls.add("SET statement_timeout TO '18000'");
+    sqls.add("set idle_in_transaction_session_timeout to '600000'");
 
     sqls.add("insert into fin_unique_tw_task_key(task_id,key_hash,key) values(?, ?, ?) on conflict (key_hash, key) do nothing");
 
     var sqlParser = new SqlParser(Executors.newCachedThreadPool());
+    var interceptor = new DefaultTasQueryParsingInterceptor();
 
     for (String sql : sqls) {
       try {
+        var interceptResult = interceptor.intercept(sql);
+        if (interceptResult.getDecision() == Decision.SKIP) {
+          continue;
+        }
+
         var statements = sqlParser.parse(sql, Duration.ofSeconds(5));
 
         statements.getStatements();

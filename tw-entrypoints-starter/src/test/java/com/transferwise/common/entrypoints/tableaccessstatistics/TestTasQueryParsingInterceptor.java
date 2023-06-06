@@ -16,6 +16,7 @@ public class TestTasQueryParsingInterceptor extends DefaultTasQueryParsingInterc
     if (parsedQuery != null) {
       return InterceptResult.returnParsedQuery(parsedQuery);
     }
+
     return super.intercept(sql);
   }
 }

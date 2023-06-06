@@ -8,6 +8,7 @@ apply from: "${project.rootDir}/build.publishing.gradle"
 dependencies {
     annotationProcessor libraries.springBootConfigurationProcessor
     compileOnly libraries.springBootConfigurationProcessor
+    compileOnly libraries.flywayCore
 
     implementation(project(":tw-entrypoints"))
 

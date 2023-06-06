@@ -13,12 +13,14 @@ import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasParse
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingListener;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasFlywayConfigurationCustomizer;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryRegistry;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -76,6 +78,20 @@ public class EntryPointsAutoConfiguration {
   @ConditionalOnMissingBean(TasQueryParsingListener.class)
   public DefaultTasQueryParsingListener twEntryPointsTableAccessStatisticsQueryParsingListener(EntryPointsProperties entryPointsProperties) {
     return new DefaultTasQueryParsingListener(entryPointsProperties);
+  }
+
+  @Configuration
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnClass(name = {"org.flywaydb.core.api.configuration.FluentConfiguration",
+      "org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer"})
+  protected static class FlywayInterceptionConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(name = "tw-entrypoints.tas.flyway-integration.enabled", havingValue = "true", matchIfMissing = true)
+    public TasFlywayConfigurationCustomizer tasFlywayConfigurationCustomizer() {
+      return new TasFlywayConfigurationCustomizer();
+    }
+
   }
 
   @Bean
