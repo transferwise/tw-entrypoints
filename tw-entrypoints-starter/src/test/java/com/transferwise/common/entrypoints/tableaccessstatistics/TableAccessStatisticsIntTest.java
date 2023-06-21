@@ -18,6 +18,8 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -161,9 +163,11 @@ class TableAccessStatisticsIntTest extends BaseIntTest {
     assertThat(((Counter) meters.get(0)).count()).isEqualTo(1);
   }
 
-  @Test
-  public void updateSqlDoneOutsideOfEntrypointGetsAlsoRegistered() {
-    jdbcTemplate.update("update table_a set version=2");
+  // Also tests if quotes are removed before we register metrics.
+  @ParameterizedTest
+  @ValueSource(strings = {"table_a", "`table_a`"})
+  void updateSqlDoneOutsideOfEntrypointGetsAlsoRegistered(String tableName) {
+    jdbcTemplate.update("update " + tableName + " set version=2");
 
     List<Meter> meters = getTableAccessMeters();
 

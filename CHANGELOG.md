@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.1] - 2023-06-21
+
+### Changed
+
+* Removing quotes around table names provided by JSqlParser.
+  When table name is quoted in sql, it will be returned by JSqlParser also as quoted. But this will create double metrics from
+  sql not having quotes around table names.
+
 ## [2.12.0] - 2023-06-05
 
 ### Changed
