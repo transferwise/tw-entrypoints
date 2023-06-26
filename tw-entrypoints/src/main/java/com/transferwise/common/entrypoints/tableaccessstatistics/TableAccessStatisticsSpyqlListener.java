@@ -144,8 +144,10 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
         if (tableNames != null) {
           for (String tableName : tableNames) {
+            tableName = trimTableName(tableName);
             // Intern() makes later equal checks much faster.
-            sqlOp.getTableNames().add(tableName.intern());
+            tableName = tableName.intern();
+            sqlOp.getTableNames().add(tableName);
           }
         }
       }
@@ -179,6 +181,21 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     }
 
     return result;
+  }
+
+  protected String trimTableName(String tableName) {
+    if (StringUtils.isEmpty(tableName)) {
+      return tableName;
+    }
+
+    if ((tableName.charAt(0) == '`' && tableName.charAt(tableName.length() - 1) == '`')
+        || (tableName.charAt(0) == '\'' && tableName.charAt(tableName.length() - 1) == '\'')
+        || (tableName.charAt(0) == '"' && tableName.charAt(tableName.length() - 1) == '"')
+    ) {
+      return tableName.substring(1, tableName.length() - 1);
+    }
+
+    return tableName;
   }
 
   protected String getOperationName(Statement stmt) {
