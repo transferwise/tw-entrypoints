@@ -44,6 +44,9 @@ configurations {
     testAnnotationProcessor {
         extendsFrom(local)
     }
+    shadow {
+        extendsFrom(local)
+    }
 }
 
 dependencies {

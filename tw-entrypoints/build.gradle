@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
 ext.projectName = "Transferwise EntryPoints"
 ext.projectDescription = "Transferwise EntryPoints - Allows to track all applications entry points - REST calls, Kafka messages, jobs, threads."
 ext.projectArtifactName = "tw-entrypoints"
@@ -10,7 +14,6 @@ dependencies {
 
     implementation libraries.commonsLang3
     implementation libraries.caffeine
-    implementation libraries.commonsLang3
     implementation libraries.guava
     implementation libraries.jsqlParser
     implementation libraries.micrometerCore
@@ -19,7 +22,101 @@ dependencies {
     implementation libraries.twSpyqlCore
     implementation libraries.twGracefulShutdownInterfaces
 
+    shadow libraries.twContext
+    shadow libraries.commonsLang3
+    shadow libraries.caffeine
+    shadow libraries.guava
+    shadow libraries.micrometerCore
+    shadow libraries.slf4jApi
+    shadow libraries.twBaseUtils
+    shadow libraries.twSpyqlCore
+    shadow libraries.twGracefulShutdownInterfaces
+
     testImplementation libraries.junitJupiter
 }
 
 apply from: "build-idea-fix.gradle.kts"
+
+shadowJar {
+    dependencies {
+        dependencies {
+            exclude(dependency {
+                it.moduleName != 'jsqlparser'
+            })
+        }
+    }
+    manifest {
+        attributes 'Implementation-Version': "$project.version"
+    }
+    relocate('net.sf.jsqlparser', 'com.transferwise.common.entrypoints.shadow')
+}
+
+jar.enabled = true
+jar.dependsOn shadowJar
+
+shadowJar {
+    archiveClassifier.set('')
+}
+
+publishing {
+    publications {
+        entrypoints(MavenPublication) { publication ->
+            artifactId projectArtifactName
+
+            artifacts = [shadowJar, javadocJar, sourcesJar]
+            /*
+             This ensures that libraries will have explicit dependency versions in their Maven POM and Gradle module files, so that there would be less
+             ambiguity and less chances of dependency conflicts.
+            */
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+            }
+
+            pom {
+                name = projectName
+                description = projectDescription
+                url = projectScmUrl
+                packaging = "jar"
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0, Copyright 2021 TransferWise Ltd'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'onukristo'
+                        name = 'Kristo Kuusküll'
+                        email = "kristo.kuuskull@transferwise.com"
+                        organization = "Transferwise Ltd"
+                        organizationUrl = "https://github.com/transferwise"
+                    }
+                }
+                scm {
+                    connection = projectScmConnection
+                    developerConnection = projectScmConnection
+                    url = projectScmUrl
+                }
+                withXml {
+                    if (!asNode().dependencyManagement.isEmpty()) {
+                        throw new IllegalStateException("There should not be any `dependencyManagement` block in POM.")
+                    }
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    if (System.getenv("OSS_SIGNING_KEY")) {
+        signing {
+            useInMemoryPgpKeys(System.getenv("OSS_SIGNING_KEY"), System.getenv("OSS_SIGNING_PASSWORD"))
+            sign publishing.publications.entrypoints
+        }
+    }
+}
