@@ -31,6 +31,14 @@ import org.springframework.context.annotation.Configuration;
 public class EntryPointsAutoConfiguration {
 
   @Bean
+  @ConditionalOnMissingBean(MetricsTemplate.class)
+  public DefaultMetricsTemplate twEntryPointsMetricsTemplate(IMeterCache meterCache) {
+    var template = new DefaultMetricsTemplate(meterCache);
+    template.registerLibrary();
+    return template;
+  }
+
+  @Bean
   @ConfigurationProperties(value = "tw-entrypoints", ignoreUnknownFields = false)
   public EntryPointsProperties twEntryPointsProperties() {
     return new EntryPointsProperties();
