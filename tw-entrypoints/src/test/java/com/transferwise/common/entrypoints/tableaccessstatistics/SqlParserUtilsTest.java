@@ -31,6 +31,9 @@ class SqlParserUtilsTest {
 
     sqls.add("insert into fin_unique_tw_task_key(task_id,key_hash,key) values(?, ?, ?) on conflict (key_hash, key) do nothing");
 
+    // Not supported by JSqlParser
+    // sqls.add("truncate table_a, table_b");
+
     var sqlParser = new SqlParser(Executors.newCachedThreadPool());
     var interceptor = new DefaultTasQueryParsingInterceptor();
 
