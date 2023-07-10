@@ -102,7 +102,19 @@ publishing {
                     developerConnection = projectScmConnection
                     url = projectScmUrl
                 }
-                withXml {
+                withXml { xml ->
+                    def dependenciesNode = xml.asNode().get('dependencies') ?: xml.asNode().appendNode('dependencies')
+
+                    project.configurations.getByName("shadow").resolvedConfiguration.firstLevelModuleDependencies.forEach {
+                        if (it.configuration != "platform-runtime") {
+                            def dependencyNode = dependenciesNode.appendNode('dependency')
+                            dependencyNode.appendNode('groupId', it.moduleGroup)
+                            dependencyNode.appendNode('artifactId', it.moduleName)
+                            dependencyNode.appendNode('version', it.moduleVersion)
+                            dependencyNode.appendNode('scope', 'runtime')
+                        }
+                    }
+
                     if (!asNode().dependencyManagement.isEmpty()) {
                         throw new IllegalStateException("There should not be any `dependencyManagement` block in POM.")
                     }
