@@ -71,6 +71,7 @@ Example for `TasQueryParsingInterceptor`.
 
 <!-- @formatter:off -->
 ```java
+@Component
 public class MyTasQueryParsingInterceptor extends DefaultTasQueryParsingInterceptor {
 
   @Override
