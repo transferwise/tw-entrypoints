@@ -20,7 +20,7 @@ public class ParsedQuery {
 
   @Data
   @Accessors(chain = true)
-  static class SqlOperation {
+  public static class SqlOperation {
 
     private Set<String> tableNames = new HashSet<>();
 
