@@ -13,14 +13,14 @@ public class ParsedQuery {
 
   private Map<String, SqlOperation> operations = new HashMap<>();
 
-  ParsedQuery addOperation(String operationName, SqlOperation operation) {
+  public ParsedQuery addOperation(String operationName, SqlOperation operation) {
     operations.put(operationName, operation);
     return this;
   }
 
   @Data
   @Accessors(chain = true)
-  static class SqlOperation {
+  public static class SqlOperation {
 
     private Set<String> tableNames = new HashSet<>();
 

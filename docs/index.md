@@ -71,6 +71,7 @@ Example for `TasQueryParsingInterceptor`.
 
 <!-- @formatter:off -->
 ```java
+@Component
 public class MyTasQueryParsingInterceptor extends DefaultTasQueryParsingInterceptor {
 
   @Override
@@ -81,7 +82,7 @@ public class MyTasQueryParsingInterceptor extends DefaultTasQueryParsingIntercep
 
     else if (sql.equals(knownUnParseableSql)){
       return InterceptResult.returnParsedQuery(new ParsedQuery()
-          .addOperation("insert",new SqlOperation()
+          .addOperation("insert", new ParsedQuery.SqlOperation()
               // Main table should always be first, as we register "first-table" metrics by that.
               .addTable("transfer")
               .addTable("payout")));
@@ -102,7 +103,7 @@ private TasParsedQueryRegistry registry;
 
 public void registerBadSqls(){
     registry.register(knownUnParseableSql,new ParsedQuery()
-      .addOperation("insert",new SqlOperation()
+      .addOperation("insert", new ParsedQuery.SqlOperation()
          .addTable("transfer")
          .addTable("payout")));
 }
