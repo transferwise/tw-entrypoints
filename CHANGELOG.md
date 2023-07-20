@@ -9,7 +9,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-* Visibility of `ParsedQuery.SqlOperation` is changed from package protected to public
+* Visibility of `ParsedQuery.SqlOperation` is changed from package protected to public.
+* Visibility of `ParsedQuery.addOperation` is changed from package protected to public.
 
 ## [2.13.2] - 2023-07-10
 
