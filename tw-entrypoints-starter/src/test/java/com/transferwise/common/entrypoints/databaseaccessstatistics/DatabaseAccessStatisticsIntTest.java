@@ -9,7 +9,13 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -109,6 +115,42 @@ class DatabaseAccessStatisticsIntTest extends BaseIntTest {
     assertThat(((DistributionSummary) meters.get("Registered_AffectedRows")).totalAmount()).isEqualTo(31 + 7 + 5);
     assertThat(((DistributionSummary) meters.get("Registered_FetchedRows")).totalAmount()).isEqualTo(31 - 5);
 
+  }
+
+  // This test doesn't test so much the potential concurrent modification exceptions, but it's more about documenting that it's an expected behaviour
+  // and how it should work.
+  @Test
+  void multipleThreadsAreAbleToGatherStatisticsWithinOneEntryPointConcurrently() {
+    TwContext entryPointContext = TwContext.current().createSubContext().asEntryPoint("Test", "myConcurrentEntryPoint");
+    List<Callable<Integer>> queries = Arrays.asList(
+        createQueryCallable(entryPointContext),
+        createQueryCallable(entryPointContext),
+        createQueryCallable(entryPointContext),
+        createQueryCallable(entryPointContext)
+    );
+
+    ExecutorService executorService = Executors.newFixedThreadPool(2);
+    try {
+      entryPointContext.execute(() -> {
+        try {
+          List<Future<Integer>> futures = executorService.invokeAll(queries);
+          for (Future<Integer> future : futures) {
+            future.get(1000, TimeUnit.MILLISECONDS);
+          }
+        } catch (Throwable e) {
+          throw new RuntimeException(e);
+        }
+      });
+    } finally {
+      executorService.shutdown();
+    }
+
+    DatabaseAccessStatistics stats = (DatabaseAccessStatistics) ((Map) entryPointContext.get(DatabaseAccessStatistics.TW_CONTEXT_KEY)).get("mydb");
+    assertThat(stats.getNonTransactionalQueriesCount()).isEqualTo(4);
+  }
+
+  private Callable<Integer> createQueryCallable(TwContext twContext) {
+    return () -> twContext.createSubContext().execute(() -> jdbcTemplate.queryForObject("select count(*) from table_a", Integer.class));
   }
 
   private Map<String, Meter> metersAsMap() {
