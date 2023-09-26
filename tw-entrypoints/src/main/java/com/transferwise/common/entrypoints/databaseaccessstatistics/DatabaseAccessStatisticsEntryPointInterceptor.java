@@ -8,8 +8,8 @@ import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
   @Override
   public <T> T intercept(TwContext context, Supplier<T> supplier) {
-    Map<String, DatabaseAccessStatistics> dbDasMap = new HashMap<>();
+    Map<String, DatabaseAccessStatistics> dbDasMap = new ConcurrentHashMap<>();
     try {
       context.put(DatabaseAccessStatistics.TW_CONTEXT_KEY, dbDasMap);
 
