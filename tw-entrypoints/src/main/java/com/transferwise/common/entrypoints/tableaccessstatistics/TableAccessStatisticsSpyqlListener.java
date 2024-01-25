@@ -32,7 +32,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.statement.SetStatement;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.UnsupportedStatement;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.truncate.Truncate;
+import net.sf.jsqlparser.statement.update.Update;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
@@ -120,18 +127,26 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       return new ParsedQuery();
     }
 
-    ParsedQuery result = new ParsedQuery();
-    long startTimeMs = System.currentTimeMillis();
+    var result = new ParsedQuery();
+    var startTimeMs = System.currentTimeMillis();
     try {
       var stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
 
-      for (Statement stmt : stmts.getStatements()) {
+      for (var stmt : stmts) {
+        if (stmt instanceof UnsupportedStatement) {
+          throw new IllegalStateException("Unsupported statement.");
+        }
+      }
+
+      for (Statement stmt : stmts) {
+
         // Intern() makes later equal checks much faster.
-        String opName = getOperationName(stmt).intern();
-        CustomTablesNamesFinder tablesNamesFinder = new CustomTablesNamesFinder();
+        var opName = getOperationName(stmt).intern();
+        var tablesNamesFinder = new CustomTablesNamesFinder();
         List<String> tableNames = null;
         try {
-          tableNames = tablesNamesFinder.getTableList(stmt);
+          tablesNamesFinder.getTables(stmt);
+          tableNames = tablesNamesFinder.getTables();
         } catch (UnsupportedOperationException e) {
           // Some type of statements do not support finding table names.
           // For example a statement 'SHOW FULL TABLES IN ...'.
@@ -199,8 +214,21 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   }
 
   protected String getOperationName(Statement stmt) {
-    // class.getSimpleName() is very slow on JDK 8
-    return StringUtils.substringAfterLast(stmt.getClass().getName(), ".").toLowerCase();
+    if (stmt instanceof Select) {
+      return "select";
+    } else if (stmt instanceof Update) {
+      return "update";
+    } else if (stmt instanceof Insert) {
+      return "insert";
+    } else if (stmt instanceof Delete) {
+      return "delete";
+    } else if (stmt instanceof Truncate) {
+      return "truncate";
+    } else if (stmt instanceof SetStatement) {
+      return "set";
+    }
+
+    return stmt.getClass().getSimpleName().toLowerCase();
   }
 
   class ConnectionListener implements SpyqlConnectionListener {

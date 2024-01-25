@@ -34,7 +34,7 @@ public class TasFlywayConfigurationCustomizer implements FlywayConfigurationCust
 
       @Override
       public void handle(Event event, Context context) {
-        if (event == Event.BEFORE_MIGRATE) {
+        if (event == Event.BEFORE_VALIDATE) {
           log.info("Disabling TAS query parsing before Flyway migration.");
 
           var twContext = TwContext.current().createSubContext().asEntryPoint("Flyway", "Flyway");

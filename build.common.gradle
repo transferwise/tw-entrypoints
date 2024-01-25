@@ -126,8 +126,8 @@ test {
 }
 
 tasks.findAll { it.name.startsWith("spotbugs") }*.configure {
-    effort = "max"
     excludeFilter = file('../spotbugs-exclude.xml')
+
     reports {
         xml.required = true
         html.required = true

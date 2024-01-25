@@ -39,7 +39,7 @@ public class BaseIntTest {
     meterRegistry.getMeters().stream()
         .filter(m -> (m.getId().getName().startsWith("EntryPoints") || m.getId().getName().startsWith("database")) && !(m instanceof Gauge))
         .forEach(m -> {
-          log.info("Removing metric: " + m.getId());
+          log.debug("Removing metric: " + m.getId());
           meterRegistry.remove(m);
         });
     meterCache.clear();

@@ -3,18 +3,18 @@ ext {
 
     libraries = [
             // explicit versions
-            guava                           : "com.google.guava:guava:31.1-jre",
-            jsqlParser                      : "com.github.jsqlparser:jsqlparser:4.6",
+            guava                       : "com.google.guava:guava:33.0.0-jre",
+            jsqlParser                  : "com.github.jsqlparser:jsqlparser:4.8",
             spotbugsAnnotations             : "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}",
             springBootDependencies          : "org.springframework.boot:spring-boot-dependencies:${springBootVersion}",
-            testContainersMariaDb           : "org.testcontainers:mariadb:1.17.6",
-            twBaseUtils                     : "com.transferwise.common:tw-base-utils:1.10.1",
+            testContainersMariaDb       : "org.testcontainers:mariadb:1.19.3",
+            twBaseUtils                 : "com.transferwise.common:tw-base-utils:1.12.3",
             twContext                       : "com.transferwise.common:tw-context:1.0.0",
             twContextStarter                : "com.transferwise.common:tw-context-starter:1.0.0",
-            twGracefulShutdown              : 'com.transferwise.common:tw-graceful-shutdown:2.11.0',
-            twGracefulShutdownInterfaces    : 'com.transferwise.common:tw-graceful-shutdown-interfaces:2.11.0',
-            twSpyqlCore                     : "com.transferwise.common:tw-spyql-core:1.6.0",
-            twSpyqlStarter                  : "com.transferwise.common:tw-spyql-starter:1.6.0",
+            twGracefulShutdown          : 'com.transferwise.common:tw-graceful-shutdown:2.14.2',
+            twGracefulShutdownInterfaces: 'com.transferwise.common:tw-graceful-shutdown-interfaces:2.14.2',
+            twSpyqlCore                 : "com.transferwise.common:tw-spyql-core:1.6.1",
+            twSpyqlStarter              : "com.transferwise.common:tw-spyql-starter:1.6.1",
 
             // versions managed by spring-boot-dependencies platform
             caffeine                        : "com.github.ben-manes.caffeine:caffeine",
@@ -24,6 +24,7 @@ ext {
 
             hikariCp                        : "com.zaxxer:HikariCP",
             junitJupiter                    : "org.junit.jupiter:junit-jupiter",
+            logbackClassic              : "ch.qos.logback:logback-classic",
             lombok                          : "org.projectlombok:lombok",
             mariadbJavaClient               : "org.mariadb.jdbc:mariadb-java-client",
             micrometerCore                  : "io.micrometer:micrometer-core",

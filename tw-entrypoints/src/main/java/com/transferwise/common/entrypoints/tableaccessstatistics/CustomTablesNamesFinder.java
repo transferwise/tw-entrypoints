@@ -1,56 +1,33 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import lombok.Getter;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.SetStatement;
-import net.sf.jsqlparser.statement.ShowColumnsStatement;
-import net.sf.jsqlparser.statement.Statements;
-import net.sf.jsqlparser.statement.alter.Alter;
-import net.sf.jsqlparser.statement.create.index.CreateIndex;
-import net.sf.jsqlparser.statement.create.view.CreateView;
-import net.sf.jsqlparser.statement.drop.Drop;
-import net.sf.jsqlparser.statement.execute.Execute;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class CustomTablesNamesFinder extends TablesNamesFinder {
 
-  @Override
-  protected String extractTableName(Table table) {
-    return table.getName();
-  }
+  @Getter
+  private final List<String> tables = new ArrayList<>();
+  private final Set<String> uniqueTables = new HashSet<>();
 
-  @Override
-  public void visit(Drop drop) {
-    visit(drop.getName());
-  }
+  /*
+    The super class loses the order of tables visited, as its tables list is based on Set.
 
+    We are providing here the option to get the ordered tables list.
+   */
   @Override
-  public void visit(CreateIndex createIndex) {
-    visit(createIndex.getTable());
-  }
+  public void visit(Table tableName) {
+    String tableWholeName = extractTableName(tableName);
 
-  @Override
-  public void visit(CreateView createView) {
-    visit(createView.getView());
-  }
+    if (!uniqueTables.contains(tableWholeName)) {
+      uniqueTables.add(tableWholeName);
+      tables.add(tableWholeName);
+    }
 
-  @Override
-  public void visit(Alter alter) {
-    visit(alter.getTable());
-  }
-
-  @Override
-  public void visit(Statements stmts) {
-  }
-
-  @Override
-  public void visit(Execute execute) {
-  }
-
-  @Override
-  public void visit(SetStatement set) {
-  }
-
-  @Override
-  public void visit(ShowColumnsStatement set) {
+    super.visit(tableName);
   }
 }

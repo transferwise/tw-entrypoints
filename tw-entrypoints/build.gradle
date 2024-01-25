@@ -22,17 +22,8 @@ dependencies {
     implementation libraries.twSpyqlCore
     implementation libraries.twGracefulShutdownInterfaces
 
-    shadow libraries.twContext
-    shadow libraries.commonsLang3
-    shadow libraries.caffeine
-    shadow libraries.guava
-    shadow libraries.micrometerCore
-    shadow libraries.slf4jApi
-    shadow libraries.twBaseUtils
-    shadow libraries.twSpyqlCore
-    shadow libraries.twGracefulShutdownInterfaces
-
     testImplementation libraries.junitJupiter
+    testRuntimeOnly libraries.logbackClassic
 }
 
 apply from: "build-idea-fix.gradle.kts"
@@ -48,10 +39,10 @@ shadowJar {
     manifest {
         attributes 'Implementation-Version': "$project.version"
     }
-    relocate('net.sf.jsqlparser', 'com.transferwise.common.entrypoints.shadow')
+    relocate('net.sf.jsqlparser', 'com.transferwise.common.entrypoints.shadow.net.sf.jsqlparser')
 }
 
-jar.enabled = true
+jar.enabled = false
 jar.dependsOn shadowJar
 
 shadowJar {
@@ -105,8 +96,8 @@ publishing {
                 withXml { xml ->
                     def dependenciesNode = xml.asNode().get('dependencies') ?: xml.asNode().appendNode('dependencies')
 
-                    project.configurations.getByName("shadow").resolvedConfiguration.firstLevelModuleDependencies.forEach {
-                        if (it.configuration != "platform-runtime") {
+                    project.configurations.getByName("runtimeClasspath").resolvedConfiguration.firstLevelModuleDependencies.forEach {
+                        if (it.configuration != "platform-runtime" && it.moduleName != 'jsqlparser') {
                             def dependencyNode = dependenciesNode.appendNode('dependency')
                             dependencyNode.appendNode('groupId', it.moduleGroup)
                             dependencyNode.appendNode('artifactId', it.moduleName)
