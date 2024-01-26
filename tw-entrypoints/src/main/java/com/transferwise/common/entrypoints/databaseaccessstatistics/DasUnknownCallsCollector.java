@@ -49,14 +49,14 @@ public class DasUnknownCallsCollector implements GracefulShutdownStrategy {
       final long fetchedRows = das.getAndResetFetchedRowsCount();
 
       TagsSet tagsSet = das.getTagsSet();
-      UnknownCallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "unknownCallMetrics", tagsSet, () -> {
+      UnknownCallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "unknownCallMetrics", tagsSet, (name, tags) -> {
         UnknownCallMeters result = new UnknownCallMeters();
-        result.commits = meterCache.counter(COUNTER_UNREGISTERED_COMMITS, tagsSet);
-        result.rollbacks = meterCache.counter(COUNTER_UNREGISTERED_ROLLBACKS, tagsSet);
-        result.nonTransactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_NT_QUERIES, tagsSet);
-        result.transactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_T_QUERIES, tagsSet);
-        result.timeTakenNs = meterCache.counter(COUNTER_UNREGISTERED_TIME_TAKEN_NS, tagsSet);
-        result.emptyTransactions = meterCache.counter(COUNTER_UNREGISTERED_EMPTY_TRANSACTIONS, tagsSet);
+        result.commits = meterCache.counter(COUNTER_UNREGISTERED_COMMITS, tags);
+        result.rollbacks = meterCache.counter(COUNTER_UNREGISTERED_ROLLBACKS, tags);
+        result.nonTransactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_NT_QUERIES, tags);
+        result.transactionalQueries = meterCache.counter(COUNTER_UNREGISTERED_T_QUERIES, tags);
+        result.timeTakenNs = meterCache.counter(COUNTER_UNREGISTERED_TIME_TAKEN_NS, tags);
+        result.emptyTransactions = meterCache.counter(COUNTER_UNREGISTERED_EMPTY_TRANSACTIONS, tags);
         result.affectedRows = meterCache.counter(COUNTER_UNREGISTERED_AFFECTED_ROWS, tagsSet);
         result.fetchedRows = meterCache.counter(COUNTER_UNREGISTERED_FETCHED_ROWS, tagsSet);
         return result;

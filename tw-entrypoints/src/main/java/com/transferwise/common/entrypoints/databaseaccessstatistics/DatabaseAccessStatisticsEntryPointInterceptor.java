@@ -71,18 +71,18 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
       final long timeTakenInDatabaseNs = das.getTimeTakenInDatabaseNs();
       final long fetchedRowsCount = das.getFetchedRowsCount();
 
-      CallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "callMetrics", tagsSet, () -> {
+      CallMeters meters = meterCache.metersContainer(METRIC_PREFIX_DAS + "callMetrics", tagsSet, (name, tags) -> {
         CallMeters result = new CallMeters();
-        result.commits = meterCache.summary(SUMMARY_REGISTERED_COMMITS, tagsSet);
-        result.rollbacks = meterCache.summary(SUMMARY_REGISTERED_ROLLBACKS, tagsSet);
-        result.nonTransactionalQueries = meterCache.summary(SUMMARY_REGISTERED_NT_QUERIES, tagsSet);
-        result.transactionalQueries = meterCache.summary(SUMMARY_REGISTERED_T_QUERIES, tagsSet);
-        result.maxConcurrentConnections = meterCache.summary(SUMMARY_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tagsSet);
-        result.remainingOpenConnections = meterCache.summary(SUMMARY_REGISTERED_REMAINING_OPEN_CONNECTIONS, tagsSet);
-        result.emptyTransactions = meterCache.summary(SUMMARY_REGISTERED_EMPTY_TRANSACTIONS, tagsSet);
-        result.affectedRows = meterCache.summary(SUMMARY_REGISTERED_AFFECTED_ROWS, tagsSet);
-        result.fetchedRows = meterCache.summary(SUMMARY_REGISTERED_FETCHED_ROWS, tagsSet);
-        result.timeTakenNs = meterCache.timer(TIMER_REGISTERED_TIME_TAKEN, tagsSet);
+        result.commits = meterCache.summary(SUMMARY_REGISTERED_COMMITS, tags);
+        result.rollbacks = meterCache.summary(SUMMARY_REGISTERED_ROLLBACKS, tags);
+        result.nonTransactionalQueries = meterCache.summary(SUMMARY_REGISTERED_NT_QUERIES, tags);
+        result.transactionalQueries = meterCache.summary(SUMMARY_REGISTERED_T_QUERIES, tags);
+        result.maxConcurrentConnections = meterCache.summary(SUMMARY_REGISTERED_MAX_CONCURRENT_CONNECTIONS, tags);
+        result.remainingOpenConnections = meterCache.summary(SUMMARY_REGISTERED_REMAINING_OPEN_CONNECTIONS, tags);
+        result.emptyTransactions = meterCache.summary(SUMMARY_REGISTERED_EMPTY_TRANSACTIONS, tags);
+        result.affectedRows = meterCache.summary(SUMMARY_REGISTERED_AFFECTED_ROWS, tags);
+        result.fetchedRows = meterCache.summary(SUMMARY_REGISTERED_FETCHED_ROWS, tags);
+        result.timeTakenNs = meterCache.timer(TIMER_REGISTERED_TIME_TAKEN, tags);
         return result;
       });
 

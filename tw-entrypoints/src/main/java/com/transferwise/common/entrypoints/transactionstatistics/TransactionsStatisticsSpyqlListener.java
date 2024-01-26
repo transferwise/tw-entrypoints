@@ -135,10 +135,10 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
           operationTag.getKey(), operationTag.getValue(),
           readOnlyTag.getKey(), readOnlyTag.getValue());
 
-      TransactionMetrics metrics = meterCache.metersContainer(METRIC_COLLECTION_TRANSACTION_END, tagsSet, () -> {
+      TransactionMetrics metrics = meterCache.metersContainer(METRIC_COLLECTION_TRANSACTION_END, tagsSet, (name, tags) -> {
         TransactionMetrics result = new TransactionMetrics();
-        result.completion = meterCache.timer(METRIC_TRANSACTION_COMPLETION, tagsSet);
-        result.finalization = meterCache.timer(METRIC_TRANSACTION_FINALIZATION, tagsSet);
+        result.completion = meterCache.timer(METRIC_TRANSACTION_COMPLETION, tags);
+        result.finalization = meterCache.timer(METRIC_TRANSACTION_FINALIZATION, tags);
         return result;
       });
 
