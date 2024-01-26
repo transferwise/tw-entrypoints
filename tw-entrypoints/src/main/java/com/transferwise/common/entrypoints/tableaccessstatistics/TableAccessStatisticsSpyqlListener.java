@@ -13,7 +13,6 @@ import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import com.transferwise.common.entrypoints.EntryPointsProperties;
-import com.transferwise.common.entrypoints.tableaccessstatistics.ParsedQuery.SqlOperation;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor.InterceptResult.Decision;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
@@ -21,14 +20,12 @@ import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +89,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     this.tasQueryParsingInterceptor = tasQueryParsingInterceptor;
     this.tasQueryParsingListener = tasQueryParsingListener;
 
-    MeterRegistry meterRegistry = meterCache.getMeterRegistry();
+    final var meterRegistry = meterCache.getMeterRegistry();
     meterRegistry.config().meterFilter(new TasMeterFilter());
 
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(entryPointsProperties.getTas().getSqlParser().getCacheSizeMib() * MIB).recordStats()
@@ -120,17 +117,17 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   }
 
   protected ParsedQuery parseSql(String sql, TwContext context) {
-    var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+    final var interceptResult = tasQueryParsingInterceptor.intercept(sql);
     if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
       return interceptResult.getParsedQuery();
     } else if (interceptResult.getDecision() == Decision.SKIP) {
       return new ParsedQuery();
     }
 
-    var result = new ParsedQuery();
-    var startTimeMs = System.currentTimeMillis();
+    final var result = new ParsedQuery();
+    final var startTimeMs = System.currentTimeMillis();
     try {
-      var stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
+      final var stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
 
       for (var stmt : stmts) {
         if (stmt instanceof UnsupportedStatement) {
@@ -138,7 +135,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         }
       }
 
-      for (Statement stmt : stmts) {
+      for (var stmt : stmts) {
 
         // Intern() makes later equal checks much faster.
         var opName = getOperationName(stmt).intern();
@@ -153,12 +150,12 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
           log.debug("Unsupported query '{}'.", sql, e);
         }
 
-        ParsedQuery.SqlOperation sqlOp = result
+        final var sqlOp = result
             .getOperations()
             .computeIfAbsent(opName, k -> new ParsedQuery.SqlOperation());
 
         if (tableNames != null) {
-          for (String tableName : tableNames) {
+          for (var tableName : tableNames) {
             tableName = trimTableName(tableName);
             // Intern() makes later equal checks much faster.
             tableName = tableName.intern();
@@ -184,7 +181,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       )).increment();
       tasQueryParsingListener.parsingFailed(sql, Duration.of(System.currentTimeMillis() - startTimeMs, ChronoUnit.MILLIS), t);
     } finally {
-      long durationMs = System.currentTimeMillis() - startTimeMs;
+      var durationMs = System.currentTimeMillis() - startTimeMs;
       if (durationMs > entryPointsProperties.getTas().getSqlParser().getParseDurationWarnThreshold().toMillis()) {
         meterCache.counter(COUNTER_SLOW_PARSES, TagsSet.of(
             EntryPointsMetrics.TAG_DATABASE, databaseName,
@@ -244,11 +241,11 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     }
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded, long executionTimeNs) {
-      TwContext context = TwContext.current();
-      final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
-      final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
+      final var context = TwContext.current();
+      final var inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
+      final var successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
-      ParsedQuery parsedQuery = tasParsedQueryRegistry.get(sql);
+      var parsedQuery = tasParsedQueryRegistry.get(sql);
 
       if (parsedQuery == null) {
         if (TasUtils.isQueryParsingEnabled(TwContext.current())) {
@@ -272,13 +269,13 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         return;
       }
 
-      for (Entry<String, SqlOperation> entry : parsedQuery.getOperations().entrySet()) {
-        String opName = entry.getKey();
-        SqlOperation op = entry.getValue();
+      for (var entry : parsedQuery.getOperations().entrySet()) {
+        final var opName = entry.getKey();
+        final var op = entry.getValue();
         if (op.getTableNames() != null) {
           String firstTableName = null;
-          for (String tableName : op.getTableNames()) {
-            TagsSet tagsSet = TagsSet.of(
+          for (var tableName : op.getTableNames()) {
+            final var tagsSet = TagsSet.of(
                 dbTag.getKey(), dbTag.getValue(),
                 TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
                 TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
