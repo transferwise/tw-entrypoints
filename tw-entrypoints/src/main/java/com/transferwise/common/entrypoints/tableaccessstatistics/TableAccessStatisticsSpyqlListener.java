@@ -13,6 +13,8 @@ import com.transferwise.common.context.TwContext;
 import com.transferwise.common.context.TwContextMetricsTemplate;
 import com.transferwise.common.entrypoints.EntryPointsMetrics;
 import com.transferwise.common.entrypoints.EntryPointsProperties;
+import com.transferwise.common.entrypoints.tableaccessstatistics.ParsedQuery.SqlOperation;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor.InterceptResult;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor.InterceptResult.Decision;
 import com.transferwise.common.spyql.event.GetConnectionEvent;
 import com.transferwise.common.spyql.event.StatementExecuteEvent;
@@ -26,11 +28,13 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.statement.SetStatement;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
 import net.sf.jsqlparser.statement.UnsupportedStatement;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.insert.Insert;
@@ -117,7 +121,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
   }
 
   protected ParsedQuery parseSql(String sql, TwContext context) {
-    final var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+    final InterceptResult interceptResult = tasQueryParsingInterceptor.intercept(sql);
     if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
       return interceptResult.getParsedQuery();
     } else if (interceptResult.getDecision() == Decision.SKIP) {
@@ -127,19 +131,19 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     final var result = new ParsedQuery();
     final var startTimeMs = System.currentTimeMillis();
     try {
-      final var stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
+      final Statements stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
 
-      for (var stmt : stmts) {
+      for (Statement stmt : stmts) {
         if (stmt instanceof UnsupportedStatement) {
           throw new IllegalStateException("Unsupported statement.");
         }
       }
 
-      for (var stmt : stmts) {
+      for (Statement stmt : stmts) {
 
         // Intern() makes later equal checks much faster.
-        var opName = getOperationName(stmt).intern();
-        var tablesNamesFinder = new CustomTablesNamesFinder();
+        final String opName = getOperationName(stmt).intern();
+        final CustomTablesNamesFinder tablesNamesFinder = new CustomTablesNamesFinder();
         List<String> tableNames = null;
         try {
           tablesNamesFinder.getTables(stmt);
@@ -150,12 +154,12 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
           log.debug("Unsupported query '{}'.", sql, e);
         }
 
-        final var sqlOp = result
+        final SqlOperation sqlOp = result
             .getOperations()
             .computeIfAbsent(opName, k -> new ParsedQuery.SqlOperation());
 
         if (tableNames != null) {
-          for (var tableName : tableNames) {
+          for (String tableName : tableNames) {
             tableName = trimTableName(tableName);
             // Intern() makes later equal checks much faster.
             tableName = tableName.intern();
@@ -242,16 +246,16 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded, long executionTimeNs) {
       final var context = TwContext.current();
-      final var inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
-      final var successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
+      final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
+      final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
-      var parsedQuery = tasParsedQueryRegistry.get(sql);
+      ParsedQuery parsedQuery = tasParsedQueryRegistry.get(sql);
 
       if (parsedQuery == null) {
         if (TasUtils.isQueryParsingEnabled(TwContext.current())) {
           parsedQuery = sqlParseResultsCache.get(sql, sqlForCache -> parseSql(sqlForCache, context));
         } else {
-          var interceptResult = tasQueryParsingInterceptor.intercept(sql);
+          InterceptResult interceptResult = tasQueryParsingInterceptor.intercept(sql);
           if (interceptResult.getDecision() == Decision.CUSTOM_PARSED_QUERY) {
             parsedQuery = interceptResult.getParsedQuery();
           }
@@ -269,13 +273,13 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
         return;
       }
 
-      for (var entry : parsedQuery.getOperations().entrySet()) {
-        final var opName = entry.getKey();
-        final var op = entry.getValue();
+      for (Entry<String, SqlOperation> entry : parsedQuery.getOperations().entrySet()) {
+        final String opName = entry.getKey();
+        final SqlOperation op = entry.getValue();
         if (op.getTableNames() != null) {
           String firstTableName = null;
-          for (var tableName : op.getTableNames()) {
-            final var tagsSet = TagsSet.of(
+          for (String tableName : op.getTableNames()) {
+            final TagsSet tagsSet = TagsSet.of(
                 dbTag.getKey(), dbTag.getValue(),
                 TwContextMetricsTemplate.TAG_EP_GROUP, context.getGroup(),
                 TwContextMetricsTemplate.TAG_EP_NAME, context.getName(),
