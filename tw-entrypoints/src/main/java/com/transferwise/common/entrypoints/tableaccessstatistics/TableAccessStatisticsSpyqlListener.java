@@ -22,6 +22,7 @@ import com.transferwise.common.spyql.event.StatementExecuteFailureEvent;
 import com.transferwise.common.spyql.listener.SpyqlConnectionListener;
 import com.transferwise.common.spyql.listener.SpyqlDataSourceListener;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.time.Duration;
@@ -93,7 +94,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     this.tasQueryParsingInterceptor = tasQueryParsingInterceptor;
     this.tasQueryParsingListener = tasQueryParsingListener;
 
-    final var meterRegistry = meterCache.getMeterRegistry();
+    final MeterRegistry meterRegistry = meterCache.getMeterRegistry();
     meterRegistry.config().meterFilter(new TasMeterFilter());
 
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(entryPointsProperties.getTas().getSqlParser().getCacheSizeMib() * MIB).recordStats()
@@ -128,8 +129,8 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       return new ParsedQuery();
     }
 
-    final var result = new ParsedQuery();
-    final var startTimeMs = System.currentTimeMillis();
+    final ParsedQuery result = new ParsedQuery();
+    final long startTimeMs = System.currentTimeMillis();
     try {
       final Statements stmts = sqlParser.parse(sql, entryPointsProperties.getTas().getSqlParser().getTimeout());
 
@@ -185,7 +186,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
       )).increment();
       tasQueryParsingListener.parsingFailed(sql, Duration.of(System.currentTimeMillis() - startTimeMs, ChronoUnit.MILLIS), t);
     } finally {
-      var durationMs = System.currentTimeMillis() - startTimeMs;
+      long durationMs = System.currentTimeMillis() - startTimeMs;
       if (durationMs > entryPointsProperties.getTas().getSqlParser().getParseDurationWarnThreshold().toMillis()) {
         meterCache.counter(COUNTER_SLOW_PARSES, TagsSet.of(
             EntryPointsMetrics.TAG_DATABASE, databaseName,
@@ -245,7 +246,7 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     }
 
     protected void registerSql(String sql, boolean isInTransaction, boolean succeeded, long executionTimeNs) {
-      final var context = TwContext.current();
+      final TwContext context = TwContext.current();
       final Tag inTransactionTag = isInTransaction ? TAG_IN_TRANSACTION_TRUE : TAG_IN_TRANSACTION_FALSE;
       final Tag successTag = succeeded ? TAG_SUCCESS_TRUE : TAG_SUCCESS_FALSE;
 
