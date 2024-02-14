@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class DefaultTasQueryParsingInterceptor implements TasQueryParsingInterceptor {
 
-  private static Pattern PG_SET_PATTERN = Pattern.compile("(?is)SET\\s+[a-z_]*\\s+TO\\s+.*");
+  private static final Pattern PG_SET_PATTERN = Pattern.compile("(?is)SET\\s+[a-z_]*\\s+TO\\s+.*|EXPLAIN\\s+.*");
 
   @Override
   public InterceptResult intercept(String sql) {

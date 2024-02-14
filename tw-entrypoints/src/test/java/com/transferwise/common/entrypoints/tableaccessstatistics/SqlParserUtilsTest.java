@@ -41,6 +41,15 @@ class SqlParserUtilsTest {
     testCases.add(new TestCase("set idle_in_transaction_session_timeout to '600000'",
         List.of()));
 
+    testCases.add(new TestCase("EXPLAIN FORMAT=JSON select * from fx.request where id = 1",
+        List.of()));
+    testCases.add(new TestCase("explain FORMAT=JSON select * from fx.request where id = 1",
+        List.of()));
+    testCases.add(new TestCase("EXPLAIN (FORMAT JSON) select * from fx.request where id = 1",
+        List.of()));
+    testCases.add(new TestCase("explain (FORMAT JSON) select * from fx.request where id = 1",
+        List.of()));
+
     testCases.add(new TestCase("insert into fin_unique_tw_task_key(task_id,key_hash,key) values(?, ?, ?) on conflict (key_hash, key) do nothing",
         List.of("fin_unique_tw_task_key")));
 
