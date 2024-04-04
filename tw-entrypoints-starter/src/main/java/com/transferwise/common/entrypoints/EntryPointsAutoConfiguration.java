@@ -56,7 +56,7 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
+  public static DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
     return new DatabaseAccessStatisticsBeanPostProcessor();
   }
 
