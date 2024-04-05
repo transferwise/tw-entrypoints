@@ -56,14 +56,14 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
+  public static DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
     return new DatabaseAccessStatisticsBeanPostProcessor();
   }
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
   }
 
@@ -105,7 +105,7 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TransactionStatisticsBeanPostProcessor(beanFactory);
   }
 
