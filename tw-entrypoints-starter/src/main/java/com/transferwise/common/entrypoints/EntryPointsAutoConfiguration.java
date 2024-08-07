@@ -19,8 +19,8 @@ import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryR
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
-import com.transferwise.common.entrypoints.transactionstatistics.TsMeterFilter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -65,10 +65,14 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory,
-      MeterRegistry meterRegistry) {
-    meterRegistry.config().meterFilter(new TasMeterFilter());
+  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  public static MeterFilter twEntryPointsTableAccessStatisticsMeterFilter() {
+    return new TasMeterFilter();
   }
 
   @Bean
@@ -77,6 +81,7 @@ public class EntryPointsAutoConfiguration {
   public DefaultTasParsedQueryRegistry twEntryPointsTableAccessStatisticsParsedQueryRegistry() {
     return new DefaultTasParsedQueryRegistry();
   }
+
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
@@ -109,10 +114,14 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory,
-      MeterRegistry meterRegistry) {
-    meterRegistry.config().meterFilter(new TsMeterFilter());
+  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TransactionStatisticsBeanPostProcessor(beanFactory);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
+  public static MeterFilter twEntryPointsTransactionStatisticsMetricsFilter() {
+    return new TasMeterFilter();
   }
 
   @Bean
