@@ -14,10 +14,12 @@ import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQuery
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingListener;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasFlywayConfigurationCustomizer;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasMeterFilter;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryRegistry;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.transactionstatistics.TsMeterFilter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -63,7 +65,9 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory,
+      MeterRegistry meterRegistry) {
+    meterRegistry.config().meterFilter(new TasMeterFilter());
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
   }
 
@@ -105,7 +109,9 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory,
+      MeterRegistry meterRegistry) {
+    meterRegistry.config().meterFilter(new TsMeterFilter());
     return new TransactionStatisticsBeanPostProcessor(beanFactory);
   }
 

@@ -95,7 +95,6 @@ public class TableAccessStatisticsSpyqlListener implements SpyqlDataSourceListen
     this.tasQueryParsingListener = tasQueryParsingListener;
 
     final MeterRegistry meterRegistry = meterCache.getMeterRegistry();
-    meterRegistry.config().meterFilter(new TasMeterFilter());
 
     sqlParseResultsCache = Caffeine.newBuilder().maximumWeight(entryPointsProperties.getTas().getSqlParser().getCacheSizeMib() * MIB).recordStats()
         .executor(executorService)
