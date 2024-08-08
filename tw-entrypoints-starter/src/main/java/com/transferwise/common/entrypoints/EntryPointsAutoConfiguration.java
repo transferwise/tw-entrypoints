@@ -19,6 +19,7 @@ import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryR
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.transactionstatistics.TsMeterFilter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.beans.factory.BeanFactory;
@@ -121,7 +122,7 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
   public static MeterFilter twEntryPointsTransactionStatisticsMetricsFilter() {
-    return new TasMeterFilter();
+    return new TsMeterFilter();
   }
 
   @Bean
