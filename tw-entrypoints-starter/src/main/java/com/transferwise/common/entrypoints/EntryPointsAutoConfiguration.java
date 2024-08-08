@@ -5,20 +5,25 @@ import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.MeterCache;
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.entrypoints.databaseaccessstatistics.DasMeterFilter;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DasUnknownCallsCollector;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
+import com.transferwise.common.entrypoints.executionstatistics.EsMeterFilter;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasParsedQueryRegistry;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingListener;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TableAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasFlywayConfigurationCustomizer;
+import com.transferwise.common.entrypoints.tableaccessstatistics.TasMeterFilter;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasParsedQueryRegistry;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.TasQueryParsingListener;
 import com.transferwise.common.entrypoints.transactionstatistics.TransactionStatisticsBeanPostProcessor;
+import com.transferwise.common.entrypoints.transactionstatistics.TsMeterFilter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -60,6 +65,13 @@ public class EntryPointsAutoConfiguration {
     return new DatabaseAccessStatisticsBeanPostProcessor();
   }
 
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsDatabaseAccessStatisticsMeterFilter() {
+    return new DasMeterFilter();
+  }
+
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
@@ -69,10 +81,17 @@ public class EntryPointsAutoConfiguration {
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsTableAccessStatisticsMeterFilter() {
+    return new TasMeterFilter();
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean(TasParsedQueryRegistry.class)
   public DefaultTasParsedQueryRegistry twEntryPointsTableAccessStatisticsParsedQueryRegistry() {
     return new DefaultTasParsedQueryRegistry();
   }
+
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
@@ -110,6 +129,12 @@ public class EntryPointsAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsTransactionStatisticsMetricsFilter() {
+    return new TsMeterFilter();
+  }
+
+  @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.es.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
   public ExecutionStatisticsEntryPointInterceptor twEntryPointsExecutionStatisticsEntryPointInterceptor(IMeterCache meterCache) {
@@ -117,6 +142,13 @@ public class EntryPointsAutoConfiguration {
     TwContext.addExecutionInterceptor(interceptor);
     return interceptor;
   }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.es.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsExecutionStatisticsMetricsFilter() {
+    return new EsMeterFilter();
+  }
+
 
   @Bean
   @ConditionalOnMissingBean(IExecutorServicesProvider.class)

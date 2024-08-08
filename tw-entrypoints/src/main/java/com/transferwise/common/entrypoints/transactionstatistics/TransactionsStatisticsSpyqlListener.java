@@ -67,7 +67,6 @@ public class TransactionsStatisticsSpyqlListener implements SpyqlDataSourceListe
   public TransactionsStatisticsSpyqlListener(IMeterCache meterCache, String databaseName) {
     this.dbTag = Tag.of(EntryPointsMetrics.TAG_DATABASE, databaseName);
     this.meterCache = meterCache;
-    meterCache.getMeterRegistry().config().meterFilter(new TsMeterFilter());
   }
 
   @Override
