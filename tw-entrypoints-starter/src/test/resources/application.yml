@@ -13,9 +13,11 @@ tw-graceful-shutdown:
 
 ---
 spring:
+  datasource:
+    embedded:
+      mysql:
+        port: 3306
+        enable: true
   config:
     activate:
       on-profile: continuous-integration
-embedded:
-  mysql:
-    port: 3306
