@@ -5,9 +5,11 @@ import com.transferwise.common.baseutils.concurrency.IExecutorServicesProvider;
 import com.transferwise.common.baseutils.meters.cache.IMeterCache;
 import com.transferwise.common.baseutils.meters.cache.MeterCache;
 import com.transferwise.common.context.TwContext;
+import com.transferwise.common.entrypoints.databaseaccessstatistics.DasMeterFilter;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DasUnknownCallsCollector;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsBeanPostProcessor;
 import com.transferwise.common.entrypoints.databaseaccessstatistics.DatabaseAccessStatisticsEntryPointInterceptor;
+import com.transferwise.common.entrypoints.executionstatistics.EsMeterFilter;
 import com.transferwise.common.entrypoints.executionstatistics.ExecutionStatisticsEntryPointInterceptor;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasParsedQueryRegistry;
 import com.transferwise.common.entrypoints.tableaccessstatistics.DefaultTasQueryParsingInterceptor;
@@ -59,20 +61,27 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
+  public DatabaseAccessStatisticsBeanPostProcessor twEntryPointsDatabaseAccessStatisticsBeanPostProcessor() {
     return new DatabaseAccessStatisticsBeanPostProcessor();
+  }
+
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.das.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsDatabaseAccessStatisticsMeterFilter() {
+    return new DasMeterFilter();
   }
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public TableAccessStatisticsBeanPostProcessor twEntryPointsTableAccessStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TableAccessStatisticsBeanPostProcessor(beanFactory);
   }
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.tas.enabled", havingValue = "true", matchIfMissing = true)
-  public static MeterFilter twEntryPointsTableAccessStatisticsMeterFilter() {
+  public MeterFilter twEntryPointsTableAccessStatisticsMeterFilter() {
     return new TasMeterFilter();
   }
 
@@ -115,13 +124,13 @@ public class EntryPointsAutoConfiguration {
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
-  public static TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
+  public TransactionStatisticsBeanPostProcessor twEntryPointsTransactionStatisticsBeanPostProcessor(BeanFactory beanFactory) {
     return new TransactionStatisticsBeanPostProcessor(beanFactory);
   }
 
   @Bean
   @ConditionalOnProperty(name = "tw-entrypoints.ts.enabled", havingValue = "true", matchIfMissing = true)
-  public static MeterFilter twEntryPointsTransactionStatisticsMetricsFilter() {
+  public MeterFilter twEntryPointsTransactionStatisticsMetricsFilter() {
     return new TsMeterFilter();
   }
 
@@ -133,6 +142,13 @@ public class EntryPointsAutoConfiguration {
     TwContext.addExecutionInterceptor(interceptor);
     return interceptor;
   }
+
+  @Bean
+  @ConditionalOnProperty(name = "tw-entrypoints.es.enabled", havingValue = "true", matchIfMissing = true)
+  public MeterFilter twEntryPointsExecutionStatisticsMetricsFilter() {
+    return new EsMeterFilter();
+  }
+
 
   @Bean
   @ConditionalOnMissingBean(IExecutorServicesProvider.class)

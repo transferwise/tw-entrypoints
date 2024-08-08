@@ -18,7 +18,6 @@ public class ExecutionStatisticsEntryPointInterceptor implements TwContextExecut
 
   public ExecutionStatisticsEntryPointInterceptor(IMeterCache meterCache) {
     this.meterCache = meterCache;
-    meterCache.getMeterRegistry().config().meterFilter(new EsMeterFilter());
   }
 
   @Override

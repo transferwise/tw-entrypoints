@@ -35,7 +35,6 @@ public class DatabaseAccessStatisticsEntryPointInterceptor implements TwContextE
 
   public DatabaseAccessStatisticsEntryPointInterceptor(IMeterCache meterCache) {
     this.meterCache = meterCache;
-    meterCache.getMeterRegistry().config().meterFilter(new DasMeterFilter());
   }
 
   @Override
