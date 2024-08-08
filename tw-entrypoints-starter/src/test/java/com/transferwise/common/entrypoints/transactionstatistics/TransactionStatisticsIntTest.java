@@ -32,7 +32,7 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
   }
 
   @Test
-  public void successfullTransactionGetsRegisterd() {
+  public void successfulTransactionGetsRegistered() {
     transactionsHelper.withTransaction().call(() -> {
       jdbcTemplate.update("update table_a set version=2");
       return null;
@@ -73,7 +73,7 @@ public class TransactionStatisticsIntTest extends BaseIntTest {
   }
 
   @Test
-  public void rollbackGetsRegisterd() {
+  public void rollbackGetsRegistered() {
     try {
       transactionsHelper.withTransaction().call(() -> {
         jdbcTemplate.update("update table_a set version=2");
