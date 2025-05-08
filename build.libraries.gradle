@@ -4,7 +4,7 @@ ext {
     libraries = [
             // explicit versions
             guava                       : "com.google.guava:guava:33.0.0-jre",
-            jsqlParser                  : "com.github.jsqlparser:jsqlparser:4.8",
+            jsqlParser                  : "com.github.jsqlparser:jsqlparser:5.2",
             spotbugsAnnotations             : "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}",
             springBootDependencies          : "org.springframework.boot:spring-boot-dependencies:${springBootVersion}",
             testContainersMariaDb       : "org.testcontainers:mariadb:1.19.3",
