@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.16.6] - 2025-06-02
+
+### Changed
+
+* Change the flyway configuration customizer to avoid signalling it supports events that it takes no action for. This avoids triggering a warning
+  for services using Spring Boot 3.4 about the createSchema callback being deprecated.
+
+
 ## [2.16.5] - 2025-05-08
 
 ### Changed

@@ -1,6 +1,8 @@
 package com.transferwise.common.entrypoints.tableaccessstatistics;
 
 import com.transferwise.common.context.TwContext;
+import java.util.EnumSet;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Context;
@@ -16,6 +18,8 @@ import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomiz
 @Slf4j
 public class TasFlywayConfigurationCustomizer implements FlywayConfigurationCustomizer {
 
+  private static final Set<Event> HANDLED_EVENTS = EnumSet.of(Event.BEFORE_VALIDATE, Event.AFTER_MIGRATE);
+
   boolean queryParsingWasDisabled;
   boolean queryParsingWasEnabled;
 
@@ -24,7 +28,7 @@ public class TasFlywayConfigurationCustomizer implements FlywayConfigurationCust
     configuration.callbacks(new Callback() {
       @Override
       public boolean supports(Event event, Context context) {
-        return true;
+        return HANDLED_EVENTS.contains(event);
       }
 
       @Override
