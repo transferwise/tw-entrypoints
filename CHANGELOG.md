@@ -11,7 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 * Support for spring boot 3.5
 
-## Removed
+### Removed
 
 * Support for spring boot 3.3
 
