@@ -24,6 +24,7 @@ ext {
 
             hikariCp                        : "com.zaxxer:HikariCP",
             junitJupiter                    : "org.junit.jupiter:junit-jupiter",
+            junitPlatformLauncher           : "org.junit.platform:junit-platform-launcher",
             logbackClassic              : "ch.qos.logback:logback-classic",
             lombok                          : "org.projectlombok:lombok",
             mariadbJavaClient               : "org.mariadb.jdbc:mariadb-java-client",
